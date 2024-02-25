@@ -54,11 +54,11 @@
     },
     "windows": [
       {
-        "fullscreen": false,
-        "height": 600,
+        "fullscreen": true,
         "resizable": true,
         "title": "IPSE",
-        "width": 800
+        "width": 800,
+        "height": 600
       }
     ]
   }

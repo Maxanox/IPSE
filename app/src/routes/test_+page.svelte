@@ -1,0 +1,3 @@
+console.assert(true, "The code is running this line");
+
+// Rest of your code...
