@@ -3,10 +3,19 @@
 
 use std::time::{Instant, Duration};
 use std::sync::Mutex;
-use std::ops::{Add, Mul, Sub, AddAssign, SubAssign};
-use serde::Serialize;
+use std::ops::{Add, Mul, Sub, AddAssign, SubAssign, MulAssign};
+use serde::{Serialize, Deserialize};
 
-#[derive(Copy, Serialize, Clone)]
+// Retourne le signe d'un nombre
+fn sign(x: f32) -> f32 {
+  match x {
+      x if x > 0.0 => 1.0,
+      x if x < 0.0 => -1.0,
+      _ => 0.0,
+  }
+}
+
+#[derive(Copy, Serialize, Deserialize, Clone)]
 struct Vector2 {
   x: f32,
   y: f32,
@@ -131,6 +140,14 @@ impl Mul<f32> for Vector2 {
   }
 }
 
+// Implementation de la multiplication par un coefficient avec assignation
+impl MulAssign<f32> for Vector2 {
+  fn mul_assign(&mut self, rhs: f32) -> () {
+    self.x *= rhs;
+    self.y *= rhs;
+  }
+}
+
 #[derive(Clone, Serialize)]
 struct RenderPayload {
   positions: Vec<Vector2>,
@@ -143,6 +160,7 @@ struct Simulation {
   #[serde(skip_serializing)]
   last_update: Instant,
   dt: Duration,
+  particle_size: f32
 }
 
 impl Simulation {
@@ -153,12 +171,19 @@ impl Simulation {
       velocities: Vec::new(),
       last_update: Instant::now(),
       dt: Duration::from_secs(0),
+      particle_size: 64.0 * 0.1,
     }
   }
 
-  fn run(&mut self, window: &tauri::Window) -> () {
+  fn run(&mut self, window: &tauri::Window, width: f32, height: f32) -> () {
+    self.last_update = Instant::now();
     loop {
-      std::thread::sleep(Duration::from_millis(1000 / 60));
+      //let target_fps = 60.0;
+      //let frame_time = Duration::from_secs_f32(1.0 / target_fps);
+      //let sleep_time = frame_time.checked_sub(self.dt).unwrap_or_default();
+      //std::thread::sleep(sleep_time);
+
+      std::thread::sleep(Duration::from_millis(1000 / 80));
 
       let now = Instant::now();
       self.dt = now.duration_since(self.last_update);
@@ -171,7 +196,24 @@ impl Simulation {
       }
 
       self.update();
+      self.resolve_collision(width, height);
       self.draw(window);
+    }
+  }
+
+  fn resolve_collision(&mut self, width: f32, height: f32) -> () {
+    let n: usize = self.positions.len();
+
+    for i in 0..n {
+      if self.positions[i].x.abs()  + self.particle_size > width {
+        self.positions[i].x = width - self.particle_size * sign(self.positions[i].x);
+        self.velocities[i].x *= -1.0;
+      }
+
+      if self.positions[i].y.abs() + self.particle_size > height {
+        self.positions[i].y = height - self.particle_size * sign(self.positions[i].y);
+        self.velocities[i].y *= -1.0 * 0.85;
+      }
     }
   }
 
@@ -179,7 +221,7 @@ impl Simulation {
     let n: usize = self.positions.len();
 
     for i in 0..n {
-      self.velocities[i] += Vector2::down() * 9.81 * self.dt.as_secs_f32();
+      self.velocities[i] += Vector2::down() * 9.81 * self.dt.as_secs_f32() * 15.0;
       self.positions[i] += self.velocities[i] * self.dt.as_secs_f32();
     }
   }
@@ -199,21 +241,15 @@ impl Simulation {
 }
 
 #[tauri::command]
-async fn start_simulation(window: tauri::Window, simulation: tauri::State<'_, Mutex<Simulation>>) -> Result<(), ()> {
+async fn start_simulation(window: tauri::Window, simulation: tauri::State<'_, Mutex<Simulation>>, width: f32, height: f32, particles: Vec<Vector2>) -> Result<(), ()> {
+  println!("Adding particles");
+  dbg!(particles.len());
+  let mut simulation = simulation.lock().unwrap();
+  for particle in particles {
+    simulation.add_particle(particle.x, particle.y);
+  }
   println!("Starting simulation");
-  let mut simulation = simulation.lock().unwrap();
-  simulation.run(&window);
-  println!("Simulation started");  
-
-  Ok(())
-}
-
-#[tauri::command]
-async fn add_particle(simulation: tauri::State<'_, Mutex<Simulation>>) -> Result<(), ()> {
-  println!("Adding particle");
-  let mut simulation = simulation.lock().unwrap();
-  simulation.add_particle(100.0, 100.0);
-  println!("Particle added");
+  simulation.run(&window, width, height);
 
   Ok(())
 }
@@ -221,6 +257,6 @@ async fn add_particle(simulation: tauri::State<'_, Mutex<Simulation>>) -> Result
 fn main() -> Result<(), tauri::Error> {
   tauri::Builder::default()
     .manage(Mutex::new(Simulation::new()))
-    .invoke_handler(tauri::generate_handler![add_particle, start_simulation])
+    .invoke_handler(tauri::generate_handler![start_simulation])
     .run(tauri::generate_context!())
 }

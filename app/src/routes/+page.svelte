@@ -19,7 +19,8 @@
     let duration = 0;
 
     let particleContainer: any;
-    let particles: PIXI.Sprite[] = [];
+    let particle_sprites: PIXI.Sprite[] = [];
+    let particle_coords: Vector2[] = [];
 
     class FPSCounter {
         smoothingFactor: number;
@@ -67,30 +68,39 @@
 
     const unlistnen_drawParticles = listen('draw-particles', (event) => {
         const payload = event.payload as RenderPayload;
-        particles.forEach((particle, index) => {
+        particle_sprites.forEach((particle, index) => {
             particle.x = payload.positions[index].x;
             particle.y = payload.positions[index].y;
         });
     });
 
+    function getRandomInt(min: number, max: number): number {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
     onMount(() => {
-        const particle = new PIXI.Sprite(PIXI.Texture.from('src/static/assets/particle.png'));
-        particle.tint = 0x0077ff; // Set particle color to ideal blue resembling water
-        particle.scale.set(0.2);
-        particle.x = 100.0;
-        particle.y = 100.0;
-        particles.push(particle);
-        invoke('add_particle');
+        for (let i = 0; i < 5000; i++) {
+            const particle = new PIXI.Sprite(PIXI.Texture.from('src/static/assets/particle.png'));
+            particle.tint = 0x0077ff; // Set particle color to ideal blue resembling water
+            particle.scale.set(0.1);
+            particle.anchor.set(0.5, 0.5);
+            particle.x = getRandomInt(0, viewWidth);
+            particle.y = getRandomInt(0, viewHeight);
+            particle_sprites.push(particle);
+            particle_coords.push({ x: particle.x, y: particle.y });
+        }
+        
+        particleContainer.addChild(...particle_sprites);
 
-        particleContainer.addChild(...particles);
-
-        invoke('start_simulation');
+        invoke('start_simulation', { width: viewWidth, height: viewHeight, particles: particle_coords });
 
         return async () => {
             await unlisten_nextStep;
             await unlistnen_drawParticles;
 
-            particles.forEach(particle => particle.destroy());
+            particle_sprites.forEach(particle => particle.destroy());
         };
     });
 </script>
@@ -100,7 +110,7 @@
         <div class="card flex flex-row items-center justify-left w-full h-11 p-5 gap-5">
             <span>Step : {step}</span>
             <span class="divider-vertical h-6 m-0"/>
-            <span>FPS : {fps.toFixed(0)}/60</span>
+            <span>FPS : {fps.toFixed(0)}/80</span>
             <span class="divider-vertical h-6 m-0"/>
             <span>Duration : {duration} sec</span>
             <LightSwitch class="ml-auto"/>
