@@ -212,7 +212,7 @@ impl Simulation {
 
       if self.positions[i].y.abs() + self.particle_size > height {
         self.positions[i].y = height - self.particle_size * sign(self.positions[i].y);
-        self.velocities[i].y *= -1.0 * 0.85;
+        self.velocities[i].y *= -1.0 * 1.0;
       }
     }
   }
