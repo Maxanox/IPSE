@@ -14,13 +14,18 @@
 
     let step = 0;
     let fps = 0;
-
-    let start = performance.now();
     let duration = 0;
+
+    let particleCount = 0;
+    let particleToSpawn = 1;
 
     let particleContainer: any;
     let particle_sprites: PIXI.Sprite[] = [];
-    let particle_coords: Vector2[] = [];
+
+    let spawn_button: HTMLButtonElement;
+
+    type Timeout = ReturnType<typeof setInterval>;
+    let duration_id: Timeout;
 
     class FPSCounter {
         smoothingFactor: number;
@@ -80,8 +85,12 @@
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    onMount(() => {
-        for (let i = 0; i < 5000; i++) {
+    async function spawnParticles() {
+        spawn_button.disabled = true;
+
+        let particle_coords: Vector2[] = [];
+
+        for (let i = 0; i < particleToSpawn; i++) {
             const particle = new PIXI.Sprite(PIXI.Texture.from('src/static/assets/particle.png'));
             particle.tint = 0x0077ff; // Set particle color to ideal blue resembling water
             particle.scale.set(0.1);
@@ -92,13 +101,25 @@
             particle_coords.push({ x: particle.x, y: particle.y });
         }
         
+        particleCount += particleToSpawn;
+
         particleContainer.addChild(...particle_sprites);
 
-        invoke('start_simulation', { width: viewWidth, height: viewHeight, particles: particle_coords });
+        await invoke('add_particles', { particles: particle_coords });
 
+        duration_id = setInterval(() => {
+            duration += 0.01;
+        }, 10);
+
+        invoke('start_simulation', { width: viewWidth, height: viewHeight });
+    }
+
+    onMount(() => {
         return async () => {
             await unlisten_nextStep;
             await unlistnen_drawParticles;
+
+            clearInterval(duration_id);
 
             particle_sprites.forEach(particle => particle.destroy());
         };
@@ -110,9 +131,11 @@
         <div class="card flex flex-row items-center justify-left w-full h-11 p-5 gap-5">
             <span>Step : {step}</span>
             <span class="divider-vertical h-6 m-0"/>
-            <span>FPS : {fps.toFixed(0)}/80</span>
+            <span>FPS : {fps.toFixed(1)}/60</span>
             <span class="divider-vertical h-6 m-0"/>
-            <span>Duration : {duration} sec</span>
+            <span>Duration : { (duration).toFixed(2) } sec</span>
+            <span class="divider-vertical h-6 m-0"/>
+            <span>Particles : { particleCount }</span>
             <LightSwitch class="ml-auto"/>
         </div>
         <div class="card m-5">
@@ -128,6 +151,11 @@
                 />
             </Application>
         </div>
+        <label>
+            Particle Count: {particleToSpawn}
+            <input type="range" bind:value={particleToSpawn} min="0" max="5000" />
+        </label>
+        <button bind:this={spawn_button} type="button" class="btn variant-filled" on:click={spawnParticles}>Spawn</button>
     </div>
 </main>
 

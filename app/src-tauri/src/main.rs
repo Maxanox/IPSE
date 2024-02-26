@@ -183,7 +183,7 @@ impl Simulation {
       //let sleep_time = frame_time.checked_sub(self.dt).unwrap_or_default();
       //std::thread::sleep(sleep_time);
 
-      std::thread::sleep(Duration::from_millis(1000 / 80));
+      std::thread::sleep(Duration::from_millis(1000 / 60));
 
       let now = Instant::now();
       self.dt = now.duration_since(self.last_update);
@@ -212,16 +212,15 @@ impl Simulation {
 
       if self.positions[i].y.abs() + self.particle_size > height {
         self.positions[i].y = height - self.particle_size * sign(self.positions[i].y);
-        self.velocities[i].y *= -1.0 * 1.0;
+        self.velocities[i].y *= -1.0 * 0.8;
       }
     }
   }
 
   fn update(&mut self) -> () {
     let n: usize = self.positions.len();
-
     for i in 0..n {
-      self.velocities[i] += Vector2::down() * 9.81 * self.dt.as_secs_f32() * 15.0;
+      self.velocities[i] += Vector2::down() * 9.81 * self.dt.as_secs_f32() * 30.0;
       self.positions[i] += self.velocities[i] * self.dt.as_secs_f32();
     }
   }
@@ -241,22 +240,28 @@ impl Simulation {
 }
 
 #[tauri::command]
-async fn start_simulation(window: tauri::Window, simulation: tauri::State<'_, Mutex<Simulation>>, width: f32, height: f32, particles: Vec<Vector2>) -> Result<(), ()> {
+async fn start_simulation(window: tauri::Window, simulation: tauri::State<'_, Mutex<Simulation>>, width: f32, height: f32) -> Result<(), ()> {
+  println!("Starting simulation");
+  let mut simulation = simulation.lock().unwrap();
+  simulation.run(&window, width, height);
+
+  Ok(())
+}
+
+#[tauri::command]
+async fn add_particles(simulation: tauri::State<'_, Mutex<Simulation>>, particles: Vec<Vector2>) -> Result<(), ()> {
   println!("Adding particles");
-  dbg!(particles.len());
   let mut simulation = simulation.lock().unwrap();
   for particle in particles {
     simulation.add_particle(particle.x, particle.y);
   }
-  println!("Starting simulation");
-  simulation.run(&window, width, height);
-
+   
   Ok(())
 }
 
 fn main() -> Result<(), tauri::Error> {
   tauri::Builder::default()
     .manage(Mutex::new(Simulation::new()))
-    .invoke_handler(tauri::generate_handler![start_simulation])
+    .invoke_handler(tauri::generate_handler![start_simulation, add_particles])
     .run(tauri::generate_context!())
 }
