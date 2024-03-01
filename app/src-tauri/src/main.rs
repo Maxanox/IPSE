@@ -3,155 +3,16 @@
 
 use std::time::{Instant, Duration};
 use std::sync::Mutex;
-use std::ops::{Add, Mul, Sub, AddAssign, SubAssign, MulAssign};
-use serde::{Serialize, Deserialize};
+use serde::Serialize;
 
-// Retourne le signe d'un nombre
-fn sign(x: f32) -> f32 {
-  match x {
-      x if x > 0.0 => 1.0,
-      x if x < 0.0 => -1.0,
-      _ => 0.0,
-  }
-}
+mod custom_maths;
 
-#[derive(Copy, Serialize, Deserialize, Clone)]
-struct Vector2 {
-  x: f32,
-  y: f32,
-}
+use custom_maths::vector2::Vector2;
+use custom_maths::utils::sign_f32;
 
-#[allow(dead_code)]
-impl Vector2 {
-  // Constructeur de base
-  fn new(x: f32, y: f32) -> Vector2 {
-    Vector2 { x, y }
-  }
+mod utils;
 
-  // Constructeur de vecteur nul
-  fn zero() -> Vector2 {
-    Vector2 { x: 0.0, y: 0.0 }
-  }
-
-  // Constructeur du vecteur droite
-  fn right() -> Vector2 {
-    Vector2 { x: 1.0, y: 0.0 }
-  }
-
-  // Constructeur du vecteur gauche
-  fn left() -> Vector2 {
-    Vector2 { x: -1.0, y: 0.0 }
-  }
-
-  // vecteur haut et bas, sont inversés pour correspondre
-  // à la convention de coordonnées du canvas utilisé par PIXI.js
-
-  // Constructeur du vecteur haut
-  fn up() -> Vector2 {
-    Vector2 { x: 0.0, y: -1.0 }
-  }
-
-  // Constructeur du vecteur bas
-  fn down() -> Vector2 {
-    Vector2 { x: 0.0, y: 1.0 }
-  }
-
-  // Retourne le vecteur opposé
-  fn opposite(&self) -> Vector2 {
-    Vector2 {
-      x: -self.x,
-      y: -self.y,
-    }
-  }
-
-  // Retourne la norme du vecteur
-  fn magnitude(&self) -> f32 {
-    (self.x * self.x + self.y * self.y).sqrt()
-  }
-
-  // Retourne le vecteur normalisé
-  fn normalize(&self) -> Vector2 {
-    let magnitude = self.magnitude();
-    Vector2 {
-      x: self.x / magnitude,
-      y: self.y / magnitude,
-    }
-  }
-}
-
-// Implementation de l'addition
-impl Add<Vector2> for Vector2 {
-  type Output = Vector2;
-
-  fn add(self, rhs: Vector2) -> Self::Output {
-    Vector2 {
-      x: self.x + rhs.x,
-      y: self.y + rhs.y,
-    }
-  }
-}
-
-// Implementation de la soustraction
-impl Sub<Vector2> for Vector2 {
-  type Output = Vector2;
-
-  fn sub(self, rhs: Vector2) -> Self::Output {
-    Vector2 {
-      x: self.x - rhs.x,
-      y: self.y - rhs.y,
-    }
-  }
-}
-
-// Implementation de l'addition avec assignation
-impl AddAssign<Vector2> for Vector2 {
-  fn add_assign(&mut self, rhs: Vector2) {
-    self.x += rhs.x;
-    self.y += rhs.y;
-  }
-}
-
-// Implementation de la soustraction avec assignation
-impl SubAssign<Vector2> for Vector2 {
-  fn sub_assign(&mut self, rhs: Vector2) {
-    self.x -= rhs.x;
-    self.y -= rhs.y;
-  }
-}
-
-// Implementation du produit scalaire
-impl Mul<Vector2> for Vector2 {
-  type Output = f32;
-
-  fn mul(self, rhs: Vector2) -> Self::Output {
-    self.x * rhs.x + self.y * rhs.y
-  }
-}
-
-// Implementation de la multiplication par un coefficient
-impl Mul<f32> for Vector2 {
-  type Output = Vector2;
-
-  fn mul(self, rhs: f32) -> Self::Output {
-    Vector2 {
-      x: self.x * rhs,
-      y: self.y * rhs,
-    }
-  }
-}
-
-// Implementation de la multiplication par un coefficient avec assignation
-impl MulAssign<f32> for Vector2 {
-  fn mul_assign(&mut self, rhs: f32) -> () {
-    self.x *= rhs;
-    self.y *= rhs;
-  }
-}
-
-#[derive(Clone, Serialize)]
-struct RenderPayload {
-  positions: Vec<Vector2>,
-}
+use utils::payload_models::RenderPayload;
 
 #[derive(Clone, Serialize)]
 struct Simulation {
@@ -206,12 +67,12 @@ impl Simulation {
 
     for i in 0..n {
       if self.positions[i].x.abs()  + self.particle_size > width {
-        self.positions[i].x = width - self.particle_size * sign(self.positions[i].x);
+        self.positions[i].x = width - self.particle_size * sign_f32(self.positions[i].x);
         self.velocities[i].x *= -1.0;
       }
 
       if self.positions[i].y.abs() + self.particle_size > height {
-        self.positions[i].y = height - self.particle_size * sign(self.positions[i].y);
+        self.positions[i].y = height - self.particle_size * sign_f32(self.positions[i].y);
         self.velocities[i].y *= -1.0 * 0.8;
       }
     }
