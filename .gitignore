@@ -399,3 +399,4 @@ FodyWeavers.xsd
 
 # Tauri
 src-tauri/target
+build/
