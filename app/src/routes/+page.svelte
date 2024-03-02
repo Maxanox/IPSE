@@ -126,7 +126,7 @@
     });
 </script>
 
-<main class="container">
+<main class="container m-auto">
     <div class="flex flex-col items-center justify-center p-5">
         <div class="card flex flex-row items-center justify-left w-full h-11 p-5 gap-5">
             <span>Step : {step}</span>
