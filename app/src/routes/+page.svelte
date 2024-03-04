@@ -85,15 +85,21 @@
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    async function pauseSimulation() {
+        await invoke('pause_simulation');
+    }
+
     async function spawnParticles() {
         spawn_button.disabled = true;
+
+        invoke('start_simulation', { width: viewWidth, height: viewHeight });
 
         let particle_coords: Vector2[] = [];
 
         for (let i = 0; i < particleToSpawn; i++) {
             const particle = new PIXI.Sprite(PIXI.Texture.from('src/static/assets/particle.png'));
             particle.tint = 0x0077ff; // Set particle color to ideal blue resembling water
-            particle.scale.set(0.1);
+            particle.scale.set(0.3);
             particle.anchor.set(0.5, 0.5);
             particle.x = getRandomInt(0, viewWidth);
             particle.y = getRandomInt(0, viewHeight);
@@ -110,8 +116,6 @@
         duration_id = setInterval(() => {
             duration += 0.01;
         }, 10);
-
-        invoke('start_simulation', { width: viewWidth, height: viewHeight });
     }
 
     onMount(() => {
@@ -156,6 +160,7 @@
             <input type="range" bind:value={particleToSpawn} min="0" max="5000" />
         </label>
         <button bind:this={spawn_button} type="button" class="btn variant-filled" on:click={spawnParticles}>Spawn</button>
+        <button type="button" class="btn variant-filled" on:click={pauseSimulation}>Pause/Resume</button>
     </div>
 </main>
 
