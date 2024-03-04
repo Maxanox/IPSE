@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use std::ops::{Add, Mul, Sub, AddAssign, SubAssign, MulAssign};
+use std::ops::{Add, Mul, Div, Sub, AddAssign, SubAssign, MulAssign, DivAssign};
 
 #[derive(Copy, Serialize, Deserialize, Clone)]
 pub struct Vector2 {
@@ -17,6 +17,11 @@ impl Vector2 {
   // Constructeur de vecteur nul
   pub fn zero() -> Vector2 {
     Vector2 { x: 0.0, y: 0.0 }
+  }
+
+  // Constructeur du vecteur unitaire
+  pub fn one() -> Vector2 {
+    Vector2 { x: 1.0, y: 1.0 }
   }
 
   // Constructeur du vecteur droite
@@ -131,5 +136,25 @@ impl MulAssign<f32> for Vector2 {
   fn mul_assign(&mut self, rhs: f32) -> () {
     self.x *= rhs;
     self.y *= rhs;
+  }
+}
+
+// Implementation de la division par un coefficient
+impl Div<f32> for Vector2 {
+  type Output = Vector2;
+
+  fn div(self, rhs: f32) -> Self::Output {
+    Vector2 {
+      x: self.x / rhs,
+      y: self.y / rhs,
+    }
+  }
+}
+
+// Implementation de la division par un coefficient avec assignation
+impl DivAssign<f32> for Vector2 {
+  fn div_assign(&mut self, rhs: f32) -> () {
+    self.x /= rhs;
+    self.y /= rhs;
   }
 }

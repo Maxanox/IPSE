@@ -72,4 +72,13 @@ impl Fluid {
     pub fn get_mass(&self) -> f32 {
         self.particle_mass * self.particles.len() as f32
     }
+
+    /// Returns the positions of all particles in the fluid.
+    ///
+    /// # Returns
+    ///
+    /// A vector containing the positions of all particles in the fluid.
+    pub fn get_particle_positions(&self) -> Vec<Vector2> {
+        self.particles.iter().map(|particle| particle.position).collect()
+    }
 }

@@ -57,11 +57,6 @@
 
     const fpsCounter = new FPSCounter();
 
-    const unlisten_nextStep = listen('next-step', () => {
-        step++;
-        fps = fpsCounter.update();
-    });
-
     interface Vector2 {
         x: number;
         y: number;
@@ -71,12 +66,14 @@
         positions: Vector2[];
     }
 
-    const unlistnen_drawParticles = listen('draw-particles', (event) => {
+    const unlistnen_drawParticles = listen('draw', (event) => {
         const payload = event.payload as RenderPayload;
         particle_sprites.forEach((particle, index) => {
             particle.x = payload.positions[index].x;
             particle.y = payload.positions[index].y;
         });
+        step++;
+        fps = fpsCounter.update();
     });
 
     function getRandomInt(min: number, max: number): number {
@@ -99,7 +96,7 @@
         for (let i = 0; i < particleToSpawn; i++) {
             const particle = new PIXI.Sprite(PIXI.Texture.from('src/static/assets/particle.png'));
             particle.tint = 0x0077ff; // Set particle color to ideal blue resembling water
-            particle.scale.set(0.3);
+            particle.scale.set(0.1);
             particle.anchor.set(0.5, 0.5);
             particle.x = getRandomInt(0, viewWidth);
             particle.y = getRandomInt(0, viewHeight);
@@ -120,7 +117,6 @@
 
     onMount(() => {
         return async () => {
-            await unlisten_nextStep;
             await unlistnen_drawParticles;
 
             clearInterval(duration_id);
