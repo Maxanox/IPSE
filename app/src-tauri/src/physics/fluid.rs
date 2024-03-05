@@ -5,7 +5,7 @@ pub struct FluidParticle {
     pub position: Vector2,
     pub velocity: Vector2,
     pub acceleration: Vector2,
-    // pub color: [f32; 4],
+    pub color: String,
 }
 
 impl FluidParticle {
@@ -24,7 +24,7 @@ impl FluidParticle {
             position: Vector2::new(x, y),
             velocity: Vector2::zero(),
             acceleration: Vector2::zero(),
-            // color: [0.0, 0.0, 0.0, 1.0],
+            color: String::from("0x0077ff"),
         }
     }
 }
@@ -64,21 +64,13 @@ impl Fluid {
         self.particles.push(particle);
     }
 
-    /// Returns the total mass of the fluid.
-    ///
-    /// # Returns
-    ///
-    /// The total mass of the fluid.
-    pub fn get_mass(&self) -> f32 {
-        self.particle_mass * self.particles.len() as f32
-    }
-
     /// Returns the positions of all particles in the fluid.
     ///
     /// # Returns
     ///
     /// A vector containing the positions of all particles in the fluid.
-    pub fn get_particle_positions(&self) -> Vec<Vector2> {
-        self.particles.iter().map(|particle| particle.position).collect()
+    pub fn get_particle_infos(&self) -> Vec<(Vector2, String)> {
+        self.particles.iter().map(|particle| (particle.position, particle.color.clone())).collect()
     }
+
 }

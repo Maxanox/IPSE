@@ -63,14 +63,15 @@
     }
 
     interface RenderPayload {
-        positions: Vector2[];
+        positions: [Vector2, string][];
     }
 
     const unlistnen_drawParticles = listen('draw', (event) => {
         const payload = event.payload as RenderPayload;
-        particle_sprites.forEach((particle, index) => {
-            particle.x = payload.positions[index].x;
-            particle.y = payload.positions[index].y;
+        (particleContainer as PIXI.ParticleContainer).children.forEach((particle, index) => {
+            particle.x = payload.positions[index][0].x;
+            particle.y = payload.positions[index][0].y;
+            particle.tint = new PIXI.Color(payload.positions[index][1]);
         });
         step++;
         fps = fpsCounter.update();
@@ -82,11 +83,19 @@
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    let buttonPreviousStep: HTMLButtonElement;
+    let buttonNextStep: HTMLButtonElement;
+
     async function pauseSimulation() {
         await invoke('pause_simulation');
+        buttonPreviousStep.disabled = !buttonPreviousStep.disabled;
+        buttonNextStep.disabled = !buttonNextStep.disabled;
     }
 
+    let launched = false;
+
     async function spawnParticles() {
+        launched = true;
         spawn_button.disabled = true;
 
         invoke('start_simulation', { width: viewWidth, height: viewHeight });
@@ -95,7 +104,7 @@
 
         for (let i = 0; i < particleToSpawn; i++) {
             const particle = new PIXI.Sprite(PIXI.Texture.from('src/static/assets/particle.png'));
-            particle.tint = 0x0077ff; // Set particle color to ideal blue resembling water
+            //particle.tint = 0x0077ff; // Set particle color to ideal blue resembling water
             particle.scale.set(0.1);
             particle.anchor.set(0.5, 0.5);
             particle.x = getRandomInt(0, viewWidth);
@@ -113,6 +122,14 @@
         duration_id = setInterval(() => {
             duration += 0.01;
         }, 10);
+    }
+
+    async function nextStep() {
+        await invoke('next_step');
+    }
+
+    async function previousStep() {
+        await invoke('previous_step');
     }
 
     onMount(() => {
@@ -144,19 +161,29 @@
                     bind:instance={particleContainer}
                     autoResize
                     properties={{
-                        scale: true,
                         position: true,
-                        rotation: true
+                        tint: true
                     }}
                 />
             </Application>
         </div>
-        <label>
-            Particle Count: {particleToSpawn}
-            <input type="range" bind:value={particleToSpawn} min="0" max="5000" />
-        </label>
-        <button bind:this={spawn_button} type="button" class="btn variant-filled" on:click={spawnParticles}>Spawn</button>
-        <button type="button" class="btn variant-filled" on:click={pauseSimulation}>Pause/Resume</button>
-    </div>
+
+        {#if !launched}
+            <label>
+                Particle Count: {particleToSpawn}
+                <input type="range" bind:value={particleToSpawn} min="0" max="5000" />
+            </label>
+            <button bind:this={spawn_button} type="button" class="btn variant-filled" on:click={spawnParticles}>Spawn</button>
+        {:else}
+            <div class="card flex flex-row items-center justify-center p-2 gap-5">
+                <button bind:this={buttonPreviousStep} type="button" on:click={nextStep} class="btn variant-filled">{"<"}</button>
+                <button type="button" class="btn variant-filled" on:click={pauseSimulation}>=</button>
+                <button bind:this={buttonNextStep} type="button" on:click={previousStep} class="btn variant-filled">{">"}</button>
+            </div>
+            <label>
+                <input type="range" bind:value={particleToSpawn} min="0" max="5000" />
+            </label>
+        {/if}
+        </div>
 </main>
 

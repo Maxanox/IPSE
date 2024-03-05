@@ -48,7 +48,7 @@ impl Vector2 {
   }
 
   // Retourne le vecteur opposé
-  fn opposite(&self) -> Vector2 {
+  pub fn opposite(&self) -> Vector2 {
     Vector2 {
       x: -self.x,
       y: -self.y,
@@ -56,12 +56,12 @@ impl Vector2 {
   }
 
   // Retourne la norme du vecteur
-  fn magnitude(&self) -> f32 {
+  pub fn magnitude(&self) -> f32 {
     (self.x * self.x + self.y * self.y).sqrt()
   }
 
   // Retourne le vecteur normalisé
-  fn normalize(&self) -> Vector2 {
+  pub fn normalize(&self) -> Vector2 {
     let magnitude = self.magnitude();
     Vector2 {
       x: self.x / magnitude,
