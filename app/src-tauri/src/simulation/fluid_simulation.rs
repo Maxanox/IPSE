@@ -2,7 +2,7 @@ use colorgrad::Color;
 
 use crate::custom_maths::vector2::Vector2;
 use crate::physics::fluid::Fluid;
-use crate::simulations::renderer::Renderer;
+use crate::simulation::renderer::Renderer;
 use crate::custom_maths::utils::sign_f32;
 
 /// A struct representing a fluid simulation.
