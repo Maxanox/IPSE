@@ -1,29 +1,36 @@
 use std::time::Instant;
 use std::sync::{Arc, Mutex};
+use serde::{Deserialize, Serialize};
 
-use crate::simulation::template::Template;
+use crate::simulation::renderer::Renderer;
+use crate::simulation::simulation_template::SimulationTemplate;
 use crate::simulation::frame_history::FrameHistory;
+use crate::simulation::templates::bouncing_balls::BouncingBallSimulation;
+
+use super::custom_maths::vector2::Vector2;
 
 /// The `Manager` struct represents a simulation manager.
 /// It is responsible for managing the simulation, updating the delta time,
 /// and controlling the simulation's state.
-pub struct Manager {
-    simulation: Option<Box<dyn Template>>,
+pub struct SimulationManager {
+    renderer: Option<Renderer>,
+    simulation: Option<Box<dyn SimulationTemplate>>,
     delta_time: f32,
     last_delta_time_update: Instant,
     is_running: bool,
-    frame_history: FrameHistory<f32>,
+    frame_history: FrameHistory<f32>
 }
 
-impl Manager {
+impl SimulationManager {
     /// Creates a new `Manager` instance.
     pub fn new() -> Self {
-        Manager {
+        SimulationManager {
+            renderer: None,
             simulation: None,
             delta_time: 0.0,
             last_delta_time_update: Instant::now(),
             is_running: false,
-            frame_history: FrameHistory::new(10.0, 4.0),
+            frame_history: FrameHistory::new(10.0, 4.0)
         }
     }
 
@@ -48,7 +55,7 @@ impl Manager {
     /// # Arguments
     ///
     /// * `simulation` - A boxed trait object representing the simulation template.
-    pub fn set_simulation_template(&mut self, simulation: Box<dyn Template>) {
+    pub fn set_simulation_template(&mut self, simulation: Box<dyn SimulationTemplate>) {
         self.reset();
         self.simulation = Some(simulation);
     }
@@ -66,6 +73,11 @@ impl Manager {
         };
 
         self.is_running = v;
+    }
+
+    /// Gets the running state of the manager.
+    pub fn get_running(&self) -> bool {
+        self.is_running
     }
 
     /// Performs the next step of the simulation.
@@ -101,7 +113,7 @@ impl Manager {
 }
 
 #[tauri::command]
-async fn run(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mutex<Manager>>>) -> Result<(), String> {
+pub async fn run_simulation(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>) -> Result<(), String> {
     
     match simulation_manager.lock() {
         Ok(mut simulation_manager) => simulation_manager.set_running(true),
@@ -111,14 +123,14 @@ async fn run(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mut
     let simulation_manager = Arc::clone(&simulation_manager);
     
     std::thread::spawn(move || -> Result<(), String> {
-        while simulation_manager.lock().unwrap().is_running {
+        while match simulation_manager.lock() {Ok(simulation_manager) => simulation_manager.get_running(), Err(e) => return Err(e.to_string())} 
+        {
 
             match simulation_manager.lock() {
                 Ok(mut simulation_manager) => simulation_manager.performs()?,
                 Err(e) => return Err(e.to_string())
             };
 
-            
             match window.emit("render", "payload") {
                 Ok(_) => {},
                 Err(e) => return Err(e.to_string())
@@ -134,11 +146,36 @@ async fn run(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mut
 }
 
 #[tauri::command]
-async fn stop(simulation_manager: tauri::State<'_, Arc<Mutex<Manager>>>) -> Result<(), String> {
+pub async fn stop_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>) -> Result<(), String> {
     match simulation_manager.lock() {
         Ok(mut simulation_manager) => simulation_manager.set_running(false),
         Err(e) => return Err(e.to_string())
     };
 
+    Ok(())
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum SimulationTemplateEnum {
+    BouncingBalls
+}
+
+#[tauri::command]
+pub async fn select_simulation_template(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>, width: f32, height: f32) -> Result<(), String> {
+    println!("Simulation template selecting...");
+
+    let renderer = Renderer::new(Vector2::new(width, height), window);
+    let gradient = colorgrad::CustomGradient::new().html_colors(&["#0077ff", "#24ff6f", "ffff20", "ff3131"]).domain(&[0.0, 0.5, 0.7, 1.0]).build().unwrap();
+
+    let mut selected_template = BouncingBallSimulation::new(renderer.size, gradient, None, None, None, None);
+
+    selected_template.add_ball();
+
+    match simulation_manager.lock() {
+        Ok(mut simulation_manager) => simulation_manager.set_simulation_template(Box::new(selected_template)),
+        Err(e) => return Err(e.to_string())
+    };
+
+    println!("Simulation template selected");
     Ok(())
 }

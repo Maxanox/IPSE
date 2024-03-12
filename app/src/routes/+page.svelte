@@ -27,6 +27,10 @@
     type Timeout = ReturnType<typeof setInterval>;
     let duration_id: Timeout;
 
+    enum SimulationTemplateEnum {
+        BouncingBalls
+    }
+
     class FPSCounter {
         smoothingFactor: number;
         frameCount: number;
@@ -133,6 +137,9 @@
     }
 
     onMount(() => {
+        invoke('test');
+        invoke('select_simulation_template', { t: 0, width: viewWidth, height: viewHeight });
+
         return async () => {
             await unlistnen_drawParticles;
 

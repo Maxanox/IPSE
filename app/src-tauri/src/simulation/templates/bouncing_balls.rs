@@ -1,15 +1,16 @@
 use colorgrad::{Color, Gradient};
 
-use crate::simulation::template::Template;
-use crate::custom_maths::vector2::Vector2;
+use crate::simulation::simulation_template::SimulationTemplate;
+use crate::simulation::custom_maths::vector2::Vector2;
 use crate::simulation::renderer::RendererData;
 
+#[derive(serde::Serialize, Clone)]
 pub struct Ball {
     position: Vector2,
     velocity: Vector2,
     radius: f32,
     mass: f32,
-    color: Color,
+    color: String, // store in hex format and not in colorgrad::Color to allow serialization
 }
 
 impl Ball {
@@ -19,10 +20,12 @@ impl Ball {
             velocity,
             radius,
             mass,
-            color
+            color: color.to_hex_string()
         }
     }
 }
+
+impl RendererData for Vec<Ball> {}
 
 /// Represents a bouncing ball simulation.
 /// 
@@ -32,6 +35,7 @@ impl Ball {
 /// 
 /// In this simulation, radius and mass are equivalent, but we are using two fields for the code/logic comprehension.
 pub struct BouncingBallSimulation {
+    renderer_size: Vector2,
     balls: Vec<Ball>,
     velocity_gradient: Gradient,
     default_position: Vector2,
@@ -47,6 +51,7 @@ impl BouncingBallSimulation {
     ///
     /// # Arguments
     ///
+    /// * `renderer` - The renderer used to render the simulation.
     /// * `velocity_gradient` - The gradient used to determine the velocity of the balls.
     /// * `default_position` - The default position of the balls. If `None`, the default position is `Vector2::zero()`.
     /// * `default_velocity` - The default velocity of the balls. If `None`, the default velocity is `Vector2::zero()`.
@@ -56,10 +61,11 @@ impl BouncingBallSimulation {
     /// # Returns
     ///
     /// A new `BouncingBallSimulation` instance.
-    pub fn new(velocity_gradient: Gradient, default_position: Option<Vector2>, default_velocity: Option<Vector2>, 
+    pub fn new(renderer_size: Vector2, velocity_gradient: Gradient, default_position: Option<Vector2>, default_velocity: Option<Vector2>, 
         default_radius: Option<f32>, default_color: Option<Color>) -> Self {
         let radius = if let Some(radius) = default_radius {radius} else {1.0};
         BouncingBallSimulation {
+            renderer_size,
             balls: Vec::new(),
             default_position: if let Some(position) = default_position {position} else {Vector2::zero()},
             default_velocity: if let Some(velocity) = default_velocity {velocity} else {Vector2::zero()},
@@ -98,7 +104,7 @@ impl BouncingBallSimulation {
     }
 }
 
-impl Template for BouncingBallSimulation {
+impl SimulationTemplate for BouncingBallSimulation {
     fn next_step(&mut self, dt: f32) -> Result<(), String> {
         for ball in &mut self.balls {
             // Apply gravity
@@ -109,27 +115,32 @@ impl Template for BouncingBallSimulation {
             if ball.position.x - ball.radius < 0.0 {
                 ball.position.x = ball.radius;
                 ball.velocity.x *= -1.0;
-            } else if ball.position.x + ball.radius > self.renderer.width {
-                ball.position.x = self.renderer.width - ball.radius;
+            } else if ball.position.x + ball.radius > self.renderer_size.x {
+                ball.position.x = self.renderer_size.x - ball.radius;
                 ball.velocity.x *= -1.0;
-
             }
             if ball.position.y - ball.radius < 0.0 {
                 ball.position.y = ball.radius;
                 ball.velocity.y *= -1.0;
-            } else if ball.position.y + ball.radius > self.renderer.height {
-                ball.position.y = self.renderer.height - ball.radius;
+            } else if ball.position.y + ball.radius > self.renderer_size.y {
+                ball.position.y = self.renderer_size.y - ball.radius;
                 ball.velocity.y *= -1.0;
             }
             // Update color in function of the velocity
             let normalized_velocity = ball.velocity.magnitude() / 100.0;
-            ball.color = self.velocity_gradient.at(normalized_velocity as f64);
+            ball.color = self.velocity_gradient.at(normalized_velocity as f64).to_hex_string();
         }
 
         Ok(())
     }
 
-    fn get_renderer_data(&self) -> Box<dyn RendererData> {
-        unimplemented!()
+    fn set_renderer_size(&mut self, size: Vector2) -> Result<(), String> {
+        self.renderer_size = size;
+        Ok(())
+    }
+
+    fn get_renderer_data(&self) -> Result<Box<dyn RendererData>, String> {
+        //self.balls
+        Ok(Box::new(self.balls.clone()))
     }
 }

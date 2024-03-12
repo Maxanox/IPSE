@@ -1,6 +1,6 @@
-pub mod fluid_simulation;
 pub mod renderer;
-pub mod manager;
+pub mod simulation_manager;
 pub mod frame_history;
-pub mod template;
+pub mod simulation_template;
 pub mod templates;
+pub mod custom_maths;

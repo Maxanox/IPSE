@@ -1,20 +1,29 @@
-use crate::custom_maths::vector2::Vector2;
+use erased_serde::serialize_trait_object;
+
+use super::custom_maths::vector2::Vector2;
+
+pub trait RendererData: erased_serde::Serialize {}
+
+serialize_trait_object!(RendererData);
 
 /// Represents a renderer for simulations.
 pub struct Renderer {
-    pub width: f32,
-    pub height: f32,
+    pub size: Vector2,
+    pub window: tauri::Window
 }
 
 impl Renderer {
-    pub fn new(width: f32, height: f32) -> Self {
+    pub fn new(size: Vector2, window: tauri::Window) -> Self {
         Self {
-            width,
-            height,
+            size,
+            window
         }
     }
-}
 
-pub trait RendererData {
-    fn get_positions(&self) -> Vector2;
+    pub fn render(&self, data: Box<dyn RendererData>) -> Result<(), String> {
+        match self.window.emit("render", &data) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.to_string())
+        }
+    }
 }
