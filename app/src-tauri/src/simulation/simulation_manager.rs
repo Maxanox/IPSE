@@ -110,10 +110,31 @@ impl SimulationManager {
     pub fn backward(&mut self, steps: Option<u32>) {
         unimplemented!()
     }
+
+    /// Renders the simulation.
+    ///
+    /// This method renders the simulation using the current renderer,
+    /// by retrieving the data associated with the simulation template to the front-end.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if no simulation template is set or if no renderer is set.
+    pub fn render(&self) -> Result<(), String> {
+        match self.simulation.as_ref() {
+            Some(simulation) => {
+                let data = simulation.get_renderer_data()?;
+                match self.renderer.as_ref() {
+                    Some(renderer) => renderer.render(data),
+                    None => Err("No renderer set".to_string())
+                }
+            },
+            None => Err("No simulation template set".to_string())
+        }
+    }
 }
 
 #[tauri::command]
-pub async fn run_simulation(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>) -> Result<(), String> {
+pub async fn run_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>) -> Result<(), String> {
     
     match simulation_manager.lock() {
         Ok(mut simulation_manager) => simulation_manager.set_running(true),
@@ -127,12 +148,10 @@ pub async fn run_simulation(window: tauri::Window, simulation_manager: tauri::St
         {
 
             match simulation_manager.lock() {
-                Ok(mut simulation_manager) => simulation_manager.performs()?,
-                Err(e) => return Err(e.to_string())
-            };
-
-            match window.emit("render", "payload") {
-                Ok(_) => {},
+                Ok(mut simulation_manager) => {
+                    simulation_manager.performs()?;
+                    simulation_manager.render()?;
+                },
                 Err(e) => return Err(e.to_string())
             };
 
@@ -165,7 +184,10 @@ pub async fn select_simulation_template(window: tauri::Window, simulation_manage
     println!("Simulation template selecting...");
 
     let renderer = Renderer::new(Vector2::new(width, height), window);
-    let gradient = colorgrad::CustomGradient::new().html_colors(&["#0077ff", "#24ff6f", "ffff20", "ff3131"]).domain(&[0.0, 0.5, 0.7, 1.0]).build().unwrap();
+    let gradient = match colorgrad::CustomGradient::new().html_colors(&["#0077ff", "#24ff6f", "ffff20", "ff3131"]).domain(&[0.0, 0.5, 0.7, 1.0]).build() {
+        Ok(gradient) => gradient,
+        Err(e) => return Err(e.to_string())
+    };
 
     let mut selected_template = BouncingBallSimulation::new(renderer.size, gradient, None, None, None, None);
 

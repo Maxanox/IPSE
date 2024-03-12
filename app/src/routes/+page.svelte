@@ -102,7 +102,7 @@
         launched = true;
         spawn_button.disabled = true;
 
-        invoke('start_simulation', { width: viewWidth, height: viewHeight });
+        invoke('run_simulation');
 
         let particle_coords: Vector2[] = [];
 
@@ -137,8 +137,7 @@
     }
 
     onMount(() => {
-        invoke('test');
-        invoke('select_simulation_template', { t: 0, width: viewWidth, height: viewHeight });
+        invoke('select_simulation_template', { width: viewWidth, height: viewHeight });
 
         return async () => {
             await unlistnen_drawParticles;
