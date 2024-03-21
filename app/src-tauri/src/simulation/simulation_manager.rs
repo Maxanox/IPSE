@@ -122,7 +122,9 @@ impl SimulationManager {
     pub fn render(&self) -> Result<(), String> {
         match self.simulation.as_ref() {
             Some(simulation) => {
-                let data = simulation.get_renderer_data()?;
+
+                let data = simulation.get_renderer_data().unwrap();
+
                 match self.renderer.as_ref() {
                     Some(renderer) => renderer.render(data),
                     None => Err("No renderer set".to_string())
@@ -135,18 +137,17 @@ impl SimulationManager {
 
 #[tauri::command]
 pub async fn run_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>) -> Result<(), String> {
-    
+    println!("Running simulation...");
     match simulation_manager.lock() {
         Ok(mut simulation_manager) => simulation_manager.set_running(true),
         Err(e) => return Err(e.to_string())
     };
 
     let simulation_manager = Arc::clone(&simulation_manager);
-    
-    std::thread::spawn(move || -> Result<(), String> {
+
+    let join_handler = std::thread::spawn(move || -> Result<(), String> {
         while match simulation_manager.lock() {Ok(simulation_manager) => simulation_manager.get_running(), Err(e) => return Err(e.to_string())} 
         {
-
             match simulation_manager.lock() {
                 Ok(mut simulation_manager) => {
                     simulation_manager.performs()?;
@@ -161,7 +162,10 @@ pub async fn run_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<Simul
         Ok(())
     });
 
-    Ok(())
+    match join_handler.join() {
+        Ok(result) => result,
+        Err(_) => Err("Error joining thread".to_string())
+    }
 }
 
 #[tauri::command]
@@ -194,7 +198,10 @@ pub async fn select_simulation_template(window: tauri::Window, simulation_manage
     selected_template.add_ball();
 
     match simulation_manager.lock() {
-        Ok(mut simulation_manager) => simulation_manager.set_simulation_template(Box::new(selected_template)),
+        Ok(mut simulation_manager) => {
+            simulation_manager.set_simulation_template(Box::new(selected_template));
+            simulation_manager.renderer = Some(renderer);
+        },
         Err(e) => return Err(e.to_string())
     };
 

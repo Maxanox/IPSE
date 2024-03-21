@@ -63,11 +63,11 @@ impl BouncingBallSimulation {
     /// A new `BouncingBallSimulation` instance.
     pub fn new(renderer_size: Vector2, velocity_gradient: Gradient, default_position: Option<Vector2>, default_velocity: Option<Vector2>, 
         default_radius: Option<f32>, default_color: Option<Color>) -> Self {
-        let radius = if let Some(radius) = default_radius {radius} else {1.0};
+        let radius = if let Some(radius) = default_radius {radius} else {50.0};
         BouncingBallSimulation {
             renderer_size,
             balls: Vec::new(),
-            default_position: if let Some(position) = default_position {position} else {Vector2::zero()},
+            default_position: if let Some(position) = default_position {position} else {Vector2::new(renderer_size.x / 2.0, renderer_size.y / 2.0)},
             default_velocity: if let Some(velocity) = default_velocity {velocity} else {Vector2::zero()},
             default_radius: radius,
             default_mass: radius,
@@ -112,22 +112,22 @@ impl SimulationTemplate for BouncingBallSimulation {
             // Update position
             ball.position += ball.velocity * dt;
             // Check for collision with the renderer bounds
-            if ball.position.x - ball.radius < 0.0 {
-                ball.position.x = ball.radius;
+            if ball.position.x - ball.radius <= 0.0 {
                 ball.velocity.x *= -1.0;
-            } else if ball.position.x + ball.radius > self.renderer_size.x {
-                ball.position.x = self.renderer_size.x - ball.radius;
+                ball.position.x += ball.radius + ball.velocity.x * dt;
+            } else if ball.position.x + ball.radius >= self.renderer_size.x {
                 ball.velocity.x *= -1.0;
+                ball.position.x += -ball.radius + ball.velocity.x * dt;
             }
-            if ball.position.y - ball.radius < 0.0 {
-                ball.position.y = ball.radius;
+            if ball.position.y - ball.radius <= 0.0 {
                 ball.velocity.y *= -1.0;
-            } else if ball.position.y + ball.radius > self.renderer_size.y {
-                ball.position.y = self.renderer_size.y - ball.radius;
+                ball.position.y += ball.radius + ball.velocity.y * dt;
+            } else if ball.position.y + ball.radius >= self.renderer_size.y {
                 ball.velocity.y *= -1.0;
+                ball.position.y = self.renderer_size.y - (ball.position.y - self.renderer_size.y) - ball.radius;
             }
             // Update color in function of the velocity
-            let normalized_velocity = ball.velocity.magnitude() / 100.0;
+            let normalized_velocity = ball.velocity.magnitude() / 1000.0;
             ball.color = self.velocity_gradient.at(normalized_velocity as f64).to_hex_string();
         }
 

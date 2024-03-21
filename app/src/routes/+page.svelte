@@ -6,6 +6,8 @@
     import { onMount } from 'svelte';
     import * as PIXI from 'pixi.js';
 
+    import HBarQuickData from '$lib/components/UI/boxes/HBarQuickData.svelte';
+
     let width = window.innerWidth;
     let height = window.innerHeight;
 
@@ -66,17 +68,27 @@
         y: number;
     }
 
-    interface RenderPayload {
-        positions: [Vector2, string][];
+    interface Ball {
+        position: Vector2,
+        velocity: Vector2,
+        radius: number,
+        mass: number,
+        color: string,
     }
 
-    const unlistnen_drawParticles = listen('draw', (event) => {
-        const payload = event.payload as RenderPayload;
+    let x: number, y: number;
+
+    const unlistnen_drawParticles = listen('render', (event) => {
+        const payload = event.payload as Ball[];
         (particleContainer as PIXI.ParticleContainer).children.forEach((particle, index) => {
-            particle.x = payload.positions[index][0].x;
-            particle.y = payload.positions[index][0].y;
-            particle.tint = new PIXI.Color(payload.positions[index][1]);
+            particle.x = payload[index].position.x;
+            x = particle.x;
+            particle.y = y = payload[index].position.y;
+            y = particle.y;
+            particle.tint = new PIXI.Color(payload[index].color);
+            particle.scale.set(payload[index].radius/64);
         });
+
         step++;
         fps = fpsCounter.update();
     });
@@ -97,12 +109,11 @@
     }
 
     let launched = false;
+    let err: any;
 
     async function spawnParticles() {
         launched = true;
         spawn_button.disabled = true;
-
-        invoke('run_simulation');
 
         let particle_coords: Vector2[] = [];
 
@@ -121,7 +132,7 @@
 
         particleContainer.addChild(...particle_sprites);
 
-        await invoke('add_particles', { particles: particle_coords });
+        await invoke('run_simulation').catch((error) => err = error);
 
         duration_id = setInterval(() => {
             duration += 0.01;
@@ -151,16 +162,15 @@
 
 <main class="container m-auto">
     <div class="flex flex-col items-center justify-center p-5">
-        <div class="card flex flex-row items-center justify-left w-full h-11 p-5 gap-5">
-            <span>Step : {step}</span>
-            <span class="divider-vertical h-6 m-0"/>
-            <span>FPS : {fps.toFixed(1)}/60</span>
-            <span class="divider-vertical h-6 m-0"/>
-            <span>Duration : { (duration).toFixed(2) } sec</span>
-            <span class="divider-vertical h-6 m-0"/>
-            <span>Particles : { particleCount }</span>
-            <LightSwitch class="ml-auto"/>
-        </div>
+        <HBarQuickData
+            data={[
+                { name: 'Step', value: step },
+                { name: 'FPS', value: fps.toFixed(1) + '/60' },
+                { name: 'Duration', value: duration.toFixed(2) + ' sec' },
+                { name: 'Particles', value: particleCount }
+            ]} 
+            light_switch={true}
+        />
         <div class="card m-5">
             <Application width={viewWidth} height={viewHeight} backgroundAlpha={0} antialias>
                 <ParticleContainer
@@ -189,6 +199,8 @@
             <label>
                 <input type="range" bind:value={particleToSpawn} min="0" max="5000" />
             </label>
+            {"(x, y) : (" + x.toFixed(2) + ", " + y.toFixed(2) + ")"}
+            <span class="text-red-500">{err}</span>
         {/if}
         </div>
 </main>
