@@ -1,12 +1,12 @@
 <script lang="ts">
     import { Application, ParticleContainer } from 'svelte-pixi';
-    import { LightSwitch } from '@skeletonlabs/skeleton';
+    import { LightSwitch, AppBar } from '@skeletonlabs/skeleton';
     import { listen } from '@tauri-apps/api/event';
     import { invoke } from '@tauri-apps/api/tauri';
     import { onMount } from 'svelte';
     import * as PIXI from 'pixi.js';
 
-    import HBarQuickData from '$lib/components/UI/boxes/HBarQuickData.svelte';
+    import HBarQuickData from '$lib/components/app/UI/boxes/HBarQuickData.svelte';
 
     let width = window.innerWidth;
     let height = window.innerHeight;
@@ -158,19 +158,31 @@
             particle_sprites.forEach(particle => particle.destroy());
         };
     });
+
+    import App from '$lib/components/app/AppBase/App.svelte';
 </script>
 
-<main class="container m-auto">
-    <div class="flex flex-col items-center justify-center p-5">
+<App regionPage="relative" slotPageHeader="sticky top-0 z-10">
+    <svelte:fragment slot="header">
+        <AppBar>
+            <svelte:fragment slot="lead">(icon)</svelte:fragment>
+            (title)
+            <svelte:fragment slot="trail">(actions)</svelte:fragment>
+        </AppBar>
+    </svelte:fragment>
+    <svelte:fragment slot="pageHeader">
         <HBarQuickData
+            class_="m-5"
             data={[
-                { name: 'Step', value: step },
-                { name: 'FPS', value: fps.toFixed(1) + '/60' },
-                { name: 'Duration', value: duration.toFixed(2) + ' sec' },
-                { name: 'Particles', value: particleCount }
+                { name: 'Step', value: step }, 
+                { name: 'FPS', value: fps.toFixed(2) }, 
+                { name: 'Duration', value: duration.toFixed(2) }
             ]} 
-            light_switch={true}
-        />
+            light_switch={true}>
+        </HBarQuickData>
+    </svelte:fragment>
+
+    <div class="flex flex-col items-center justify-center p-5">
         <div class="card m-5">
             <Application width={viewWidth} height={viewHeight} backgroundAlpha={0} antialias>
                 <ParticleContainer
@@ -200,8 +212,8 @@
                 <input type="range" bind:value={particleToSpawn} min="0" max="5000" />
             </label>
             {"(x, y) : (" + x.toFixed(2) + ", " + y.toFixed(2) + ")"}
+
             <span class="text-red-500">{err}</span>
         {/if}
-        </div>
-</main>
-
+    </div>
+</App>
