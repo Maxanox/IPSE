@@ -118,7 +118,7 @@
         let particle_coords: Vector2[] = [];
 
         for (let i = 0; i < particleToSpawn; i++) {
-            const particle = new PIXI.Sprite(PIXI.Texture.from('src/static/assets/particle.png'));
+            const particle = new PIXI.Sprite(PIXI.Texture.from('app/src/static/assets/particle.png'));
             //particle.tint = 0x0077ff; // Set particle color to ideal blue resembling water
             particle.scale.set(0.1);
             particle.anchor.set(0.5, 0.5);
@@ -160,12 +160,24 @@
     });
 
     import App from '$lib/components/app/App/App.svelte';
+    import { AppBar } from '@skeletonlabs/skeleton';
+    import { page, navigating } from '$app/stores';
 </script>
 
-<App regionPage="relative" slotPageHeader="sticky top-0 z-10 flex">
+<App slotPageHeader="flex" regionPage="p-5 gap-5">
+    <svelte:fragment slot="header">
+        <AppBar>
+            <svelte:fragment slot="lead">
+                <a href="/main" class="btn-icon variant-filled">{"<-"}</a>
+            </svelte:fragment>
+            (title)
+            <svelte:fragment slot="trail">(actions)</svelte:fragment>
+        </AppBar>
+    </svelte:fragment>
+
     <svelte:fragment slot="pageHeader">
         <HBarQuickData
-            class_="m-10"
+            class_=""
             data={[
                 { name: 'Step', value: step }, 
                 { name: 'FPS', value: fps.toFixed(2) }, 
@@ -176,8 +188,8 @@
     </svelte:fragment>
 
     <!-- default slot -->
-    <div class="flex flex-col items-center justify-center p-5">
-        <div class="card m-5">
+    <div class="flex flex-col items-center justify-center gap-5">
+        <div class="card">
             <Application width={viewWidth} height={viewHeight} backgroundAlpha={0} antialias>
                 <ParticleContainer
                     bind:instance={particleContainer}

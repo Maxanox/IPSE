@@ -1,1 +1,1 @@
-HOME
+<a href="/main" class="btn variant-filled">Main</a>

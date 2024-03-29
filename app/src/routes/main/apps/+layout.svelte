@@ -1,11 +1,6 @@
 <script lang="ts">
     import { AppBar } from '@skeletonlabs/skeleton';
+    import { page, navigating } from '$app/stores';
 </script>
-
-<AppBar>
-    <svelte:fragment slot="lead">(icon)</svelte:fragment>
-    (title)
-    <svelte:fragment slot="trail">(actions)</svelte:fragment>
-</AppBar>
 
 <slot />
