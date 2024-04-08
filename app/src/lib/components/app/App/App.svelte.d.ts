@@ -14,8 +14,6 @@ declare const __propDef: {
         scrollbarGutter?: string | undefined;
         /** Apply arbitrary classes to the entire `#page` region.*/
         regionPage?: string | undefined;
-        /** Apply arbitrary classes to the `header` slot container element*/
-        slotHeader?: string | undefined;
         /** Apply arbitrary classes to the `sidebarLeft` slot container element*/
         slotSidebarLeft?: string | undefined;
         /** Apply arbitrary classes to the `sidebarRight` slot container element*/
@@ -26,25 +24,21 @@ declare const __propDef: {
         slotPageContent?: string | undefined;
         /** Apply arbitrary classes to the `pageFooter` slot container element*/
         slotPageFooter?: string | undefined;
-        /** Apply arbitrary classes to the `footer` slot container element*/
-        slotFooter?: string | undefined;
     };
     events: {
         scroll: SvelteEvent<UIEvent, HTMLDivElement>;
     };
     slots: {
-        header: {};
         sidebarLeft: {};
         pageHeader: {};
         default: {};
         pageFooter: {};
         sidebarRight: {};
-        footer: {};
     };
 };
 export type AppProps = typeof __propDef.props;
 export type AppEvents = typeof __propDef.events;
 export type AppSlots = typeof __propDef.slots;
-export default class App extends SvelteComponent<AppShellProps, AppShellEvents, AppShellSlots> {
+export default class App extends SvelteComponent<AppProps, AppEvents, AppSlots> {
 }
 export {};

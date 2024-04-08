@@ -140,7 +140,6 @@ impl SimulationTemplate for BouncingBallSimulation {
     }
 
     fn get_renderer_data(&self) -> Result<Box<dyn RendererData>, String> {
-        //self.balls
         Ok(Box::new(self.balls.clone()))
     }
 }

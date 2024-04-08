@@ -138,6 +138,7 @@ impl SimulationManager {
 #[tauri::command]
 pub async fn run_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>) -> Result<(), String> {
     println!("Running simulation...");
+    
     match simulation_manager.lock() {
         Ok(mut simulation_manager) => simulation_manager.set_running(true),
         Err(e) => return Err(e.to_string())
@@ -145,7 +146,8 @@ pub async fn run_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<Simul
 
     let simulation_manager = Arc::clone(&simulation_manager);
 
-    let join_handler = std::thread::spawn(move || -> Result<(), String> {
+    // join_handler is not used yet, so it temporarily prefixed with an underscore
+    let _join_handler = std::thread::spawn(move || -> Result<(), String> {
         while match simulation_manager.lock() {Ok(simulation_manager) => simulation_manager.get_running(), Err(e) => return Err(e.to_string())} 
         {
             match simulation_manager.lock() {
@@ -162,10 +164,21 @@ pub async fn run_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<Simul
         Ok(())
     });
 
-    match join_handler.join() {
+    Ok(())
+
+    // The following code is not used yet, so it is commented out
+    /* 
+    println!("Thread launched...");
+
+    let result = match join_handler.join() {
         Ok(result) => result,
         Err(_) => Err("Error joining thread".to_string())
-    }
+    };
+
+    print!("On air");
+
+    result
+    */
 }
 
 #[tauri::command]
@@ -206,5 +219,21 @@ pub async fn select_simulation_template(window: tauri::Window, simulation_manage
     };
 
     println!("Simulation template selected");
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn quit_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>) -> Result<(), String> {
+    match simulation_manager.lock() {
+        Ok(mut simulation_manager) => {
+            simulation_manager.set_running(false);
+            simulation_manager.reset();
+        },
+        Err(e) => return Err(e.to_string())
+    };
+
+    println!("Simulation quit");
+
     Ok(())
 }
