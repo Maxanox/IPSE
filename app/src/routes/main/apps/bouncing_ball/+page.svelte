@@ -1,9 +1,9 @@
-
 <script lang="ts">
     import { listen, type UnlistenFn } from '@tauri-apps/api/event';
     import { invoke } from '@tauri-apps/api/tauri';
     import { onDestroy, onMount } from 'svelte';
     
+    import type { Vector2 } from '$lib/components/app/Interfaces/vector2.ts';
     import App from '$lib/components/app/App/App.svelte';
     import Renderer from '$lib/components/app/Renderer/Renderer.svelte';
 
@@ -38,16 +38,21 @@
     async function spawnParticles() {
         launched = true;
 
+        let positions: Vector2[] = [];
+
         for (let i = 0; i < particle_number; i++) {
             let particle = new PIXI.Sprite(PIXI.Texture.from(ParticleSrc));
             // particle.tint = 0x0077ff; // Set particle color to ideal blue resembling water
-            particle.scale.set(0.1);
             particle.anchor.set(0.5, 0.5);
-            particle.x = getRandomInt(10);
-            particle.y = getRandomInt(10);
+            particle.x = getRandomInt(renderer_width);
+            particle.y = getRandomInt(renderer_height);
+            positions.push({ x: particle.x, y: particle.y });
             particle_container.addChild(particle);
         }
 
+        let renderer_size: Vector2 = { x: renderer_width, y: renderer_height };
+
+        await invoke('initialize_simulation', { rendererSize: renderer_size, data: positions }).catch((error) => err = error);
         await invoke('run_simulation').catch((error) => err = error);
 
         duration_callback = setInterval(() => {
@@ -64,8 +69,7 @@
             let payload = event.payload as Ball[];
 
             if (payload.length !== particle_container.children.length) {
-                err = "Particle count mismatch";
-                return;
+                err = "Particle count mismatch : " + payload.length + " != " + particle_container.children.length;
             }
             else if (err === "Particle count mismatch") {
                 err = "";
@@ -97,7 +101,8 @@
             data={[
                 { name: 'Step', value: step }, 
                 { name: 'FPS', value: fps.toFixed(2) }, 
-                { name: 'Duration', value: duration.toFixed(2) }
+                { name: 'Duration', value: duration.toFixed(2) },
+                { name: 'Particles', value: particle_container?.children.length }
             ]} 
             light_switch={true}>
         </HBarQuickData>
@@ -111,7 +116,8 @@
                 autoResize
                 properties={{
                     position: true,
-                    tint: true
+                    tint: true,
+                    scale: true
                 }}
             />
         </Renderer>
@@ -119,7 +125,7 @@
         {#if !launched}
             <label>
                 Particle Count: {particle_number}
-                <input type="range" bind:value={particle_number} min="1" max="5000" />
+                <input type="range" bind:value={particle_number} min="1" max="500" />
             </label>
             <button type="button" class="btn variant-filled" on:click={spawnParticles}>Spawn</button>
         {:else}

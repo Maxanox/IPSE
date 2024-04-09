@@ -1,8 +1,11 @@
+use std::any::Any;
+
 use colorgrad::{Color, Gradient};
 
 use crate::simulation::simulation_template::SimulationTemplate;
 use crate::simulation::custom_maths::vector2::Vector2;
 use crate::simulation::renderer::RendererData;
+use crate::simulation::renderer::StarterData;
 
 #[derive(serde::Serialize, Clone)]
 pub struct Ball {
@@ -22,6 +25,12 @@ impl Ball {
             mass,
             color: color.to_hex_string()
         }
+    }
+}
+
+impl StarterData for Vec<Vector2> {
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
@@ -63,14 +72,14 @@ impl BouncingBallSimulation {
     /// A new `BouncingBallSimulation` instance.
     pub fn new(renderer_size: Vector2, velocity_gradient: Gradient, default_position: Option<Vector2>, default_velocity: Option<Vector2>, 
         default_radius: Option<f32>, default_color: Option<Color>) -> Self {
-        let radius = if let Some(radius) = default_radius {radius} else {50.0};
+        let radius = if let Some(radius) = default_radius {radius} else {15.0};
         BouncingBallSimulation {
             renderer_size,
             balls: Vec::new(),
             default_position: if let Some(position) = default_position {position} else {Vector2::new(renderer_size.x / 2.0, renderer_size.y / 2.0)},
             default_velocity: if let Some(velocity) = default_velocity {velocity} else {Vector2::zero()},
             default_radius: radius,
-            default_mass: radius,
+            default_mass: radius*5.0,
             default_color: if let Some(color) = default_color {color} else {velocity_gradient.at(0.0)},
             velocity_gradient,
         }
@@ -105,6 +114,31 @@ impl BouncingBallSimulation {
 }
 
 impl SimulationTemplate for BouncingBallSimulation {
+
+    // A revoir !!!
+    fn initialize(&mut self, renderer_size: Vector2, data: Option<Box<dyn StarterData>>) -> Result<(), String> {
+        self.renderer_size = renderer_size;
+
+        let content = match data {
+            Some(data) => data,
+            None => return Ok(())
+        };
+
+        let positions = match content.as_any().downcast_ref::<Vec<Vector2>>() {
+            Some(positions) => positions.clone(),
+            None => return Err("Invalid starter data type".to_string())
+        };
+
+        for position in positions {
+            let ball = Ball::new(
+                position, self.default_velocity, self.default_radius, self.default_mass, self.default_color.clone()
+            );
+            self.push_ball(ball);
+        }
+
+        Ok(())
+    }
+
     fn next_step(&mut self, dt: f32) -> Result<(), String> {
         for ball in &mut self.balls {
             // Apply gravity
@@ -112,19 +146,21 @@ impl SimulationTemplate for BouncingBallSimulation {
             // Update position
             ball.position += ball.velocity * dt;
             // Check for collision with the renderer bounds
-            if ball.position.x - ball.radius <= 0.0 {
-                ball.velocity.x *= -1.0;
-                ball.position.x += ball.radius + ball.velocity.x * dt;
-            } else if ball.position.x + ball.radius >= self.renderer_size.x {
-                ball.velocity.x *= -1.0;
-                ball.position.x += -ball.radius + ball.velocity.x * dt;
+            if ball.position.x - ball.radius < 0.0 {
+                ball.position.x = ball.radius;
+                ball.velocity.x *= -0.8;
             }
-            if ball.position.y - ball.radius <= 0.0 {
-                ball.velocity.y *= -1.0;
-                ball.position.y += ball.radius + ball.velocity.y * dt;
-            } else if ball.position.y + ball.radius >= self.renderer_size.y {
-                ball.velocity.y *= -1.0;
-                ball.position.y = self.renderer_size.y - (ball.position.y - self.renderer_size.y) - ball.radius;
+            if ball.position.x + ball.radius > self.renderer_size.x {
+                ball.position.x = self.renderer_size.x - ball.radius;
+                ball.velocity.x *= -0.8;
+            }
+            if ball.position.y - ball.radius < 0.0 {
+                ball.position.y = ball.radius;
+                ball.velocity.y *= -0.8;
+            }
+            if ball.position.y + ball.radius > self.renderer_size.y {
+                ball.position.y = self.renderer_size.y - ball.radius;
+                ball.velocity.y *= -0.8;
             }
             // Update color in function of the velocity
             let normalized_velocity = ball.velocity.magnitude() / 1000.0;
@@ -134,12 +170,7 @@ impl SimulationTemplate for BouncingBallSimulation {
         Ok(())
     }
 
-    fn set_renderer_size(&mut self, size: Vector2) -> Result<(), String> {
-        self.renderer_size = size;
-        Ok(())
-    }
-
-    fn get_renderer_data(&self) -> Result<Box<dyn RendererData>, String> {
+    fn get_data_to_render(&self) -> Result<Box<dyn RendererData>, String> {
         Ok(Box::new(self.balls.clone()))
     }
 }

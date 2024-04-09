@@ -9,6 +9,11 @@ use crate::simulation::templates::bouncing_balls::BouncingBallSimulation;
 
 use super::custom_maths::vector2::Vector2;
 
+#[derive(Serialize, Deserialize)]
+pub enum SimulationTemplateEnum {
+    BouncingBalls
+}
+
 /// The `Manager` struct represents a simulation manager.
 /// It is responsible for managing the simulation, updating the delta time,
 /// and controlling the simulation's state.
@@ -123,7 +128,10 @@ impl SimulationManager {
         match self.simulation.as_ref() {
             Some(simulation) => {
 
-                let data = simulation.get_renderer_data().unwrap();
+                let data =  match simulation.get_data_to_render() {
+                    Ok(data) => data,
+                    Err(e) => return Err(e)
+                };
 
                 match self.renderer.as_ref() {
                     Some(renderer) => renderer.render(data),
@@ -132,6 +140,47 @@ impl SimulationManager {
             },
             None => Err("No simulation template set".to_string())
         }
+    }
+}
+
+#[tauri::command]
+pub async fn select_simulation_template(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>, width: f32, height: f32) -> Result<(), String> {
+    println!("Simulation template selecting...");
+
+    let renderer = Renderer::new(Vector2::new(width, height), window);
+    let gradient = match colorgrad::CustomGradient::new().html_colors(&["#0077ff", "#24ff6f", "ffff20", "ff3131"]).domain(&[0.0, 0.5, 0.7, 1.0]).build() {
+        Ok(gradient) => gradient,
+        Err(e) => return Err(e.to_string())
+    };
+
+    let selected_template = BouncingBallSimulation::new(renderer.size, gradient, None, None, None, None);
+
+    match simulation_manager.lock() {
+        Ok(mut simulation_manager) => {
+            simulation_manager.set_simulation_template(Box::new(selected_template));
+            simulation_manager.renderer = Some(renderer);
+        },
+        Err(e) => return Err(e.to_string())
+    };
+
+    println!("Simulation template selected");
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn initialize_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>, renderer_size: Vector2, data: Option<Vec<Vector2>>) -> Result<(), String> {
+    match simulation_manager.lock() {
+        Ok(mut simulation_manager) => {
+            match simulation_manager.simulation.as_mut() {
+                Some(simulation) => simulation.initialize(renderer_size, match data {
+                    Some(data) => Some(Box::new(data)),
+                    None => None
+                }),
+                None => Err("No simulation template set".to_string())
+            }
+        },
+        Err(e) => return Err(e.to_string())
     }
 }
 
@@ -187,38 +236,6 @@ pub async fn stop_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<Simu
         Ok(mut simulation_manager) => simulation_manager.set_running(false),
         Err(e) => return Err(e.to_string())
     };
-
-    Ok(())
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum SimulationTemplateEnum {
-    BouncingBalls
-}
-
-#[tauri::command]
-pub async fn select_simulation_template(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>, width: f32, height: f32) -> Result<(), String> {
-    println!("Simulation template selecting...");
-
-    let renderer = Renderer::new(Vector2::new(width, height), window);
-    let gradient = match colorgrad::CustomGradient::new().html_colors(&["#0077ff", "#24ff6f", "ffff20", "ff3131"]).domain(&[0.0, 0.5, 0.7, 1.0]).build() {
-        Ok(gradient) => gradient,
-        Err(e) => return Err(e.to_string())
-    };
-
-    let mut selected_template = BouncingBallSimulation::new(renderer.size, gradient, None, None, None, None);
-
-    selected_template.add_ball();
-
-    match simulation_manager.lock() {
-        Ok(mut simulation_manager) => {
-            simulation_manager.set_simulation_template(Box::new(selected_template));
-            simulation_manager.renderer = Some(renderer);
-        },
-        Err(e) => return Err(e.to_string())
-    };
-
-    println!("Simulation template selected");
 
     Ok(())
 }
