@@ -7,31 +7,7 @@ use super::custom_maths::vector2::Vector2;
 /// A trait for renderer data that can be serialized using erased_serde.
 pub trait RendererData: erased_serde::Serialize {}
 
-/// A trait for starter data that can be serialized using erased_serde.
-pub trait StarterData: erased_serde::Serialize {
-    /// Returns self as `&dyn Any`.
-    /// 
-    /// # Example
-    /// 
-    /// Usage in a function that takes a `Box<dyn StarterData>` as an argument.
-    /// Like in the `SimulationTemplate::initialize` method.
-    /// 
-    /// ```
-    /// fn initialize(data: Box<dyn StarterData>) -> Result<(), String> {
-    ///     self.renderer_size = renderer_size;
-    ///     let data = match data.as_any().downcast_ref::<Vec<Ball>>() {
-    ///         Some(balls) => balls,
-    ///         None => return Err("Invalid starter data type".to_string())
-    ///     };
-    /// 
-    ///     Ok(())
-    /// }
-    /// ```
-    fn as_any(&self) -> &dyn Any;
-}
-
 serialize_trait_object!(RendererData);
-serialize_trait_object!(StarterData);
 
 /// Represents a renderer for simulations.
 pub struct Renderer {

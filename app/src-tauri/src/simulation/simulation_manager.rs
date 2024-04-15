@@ -169,14 +169,11 @@ pub async fn select_simulation_template(window: tauri::Window, simulation_manage
 }
 
 #[tauri::command]
-pub async fn initialize_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>, renderer_size: Vector2, data: Option<Vec<Vector2>>) -> Result<(), String> {
+pub async fn initialize_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>, renderer_size: Vector2, serialized_data: Option<String>) -> Result<(), String> {
     match simulation_manager.lock() {
         Ok(mut simulation_manager) => {
             match simulation_manager.simulation.as_mut() {
-                Some(simulation) => simulation.initialize(renderer_size, match data {
-                    Some(data) => Some(Box::new(data)),
-                    None => None
-                }),
+                Some(simulation) => simulation.initialize(renderer_size, serialized_data),
                 None => Err("No simulation template set".to_string())
             }
         },

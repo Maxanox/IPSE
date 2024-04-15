@@ -1,5 +1,4 @@
 use crate::simulation::renderer::RendererData;
-use crate::simulation::renderer::StarterData;
 use crate::simulation::custom_maths::vector2::Vector2;
 
 
@@ -18,12 +17,12 @@ pub trait SimulationTemplate: Send {
     /// # Arguments
     ///
     /// * `renderer_size` - The size of the renderer as a `Vector2`.
-    /// * `data` - The starter data as a boxed trait object implementing `StarterData`.
+    /// * `serialized_data` - The starter data as a json `String`.
     ///
     /// # Returns
     ///
     /// Returns `Ok(())` if the initialization was successful, otherwise returns an error message as a `String`.
-    fn initialize(&mut self, renderer_size: Vector2, data: Option<Box<dyn StarterData>>) -> Result<(), String>;
+    fn initialize(&mut self, renderer_size: Vector2, serialized_data: Option<String>) -> Result<(), String>;
 
     /// Performs the next step of the simulation.
     ///

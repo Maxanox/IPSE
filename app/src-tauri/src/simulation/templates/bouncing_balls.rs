@@ -1,13 +1,12 @@
-use std::any::Any;
+use serde::{Deserialize, Serialize};
 
 use colorgrad::{Color, Gradient};
 
 use crate::simulation::simulation_template::SimulationTemplate;
 use crate::simulation::custom_maths::vector2::Vector2;
 use crate::simulation::renderer::RendererData;
-use crate::simulation::renderer::StarterData;
 
-#[derive(serde::Serialize, Clone)]
+#[derive(Serialize, Clone)]
 pub struct Ball {
     position: Vector2,
     velocity: Vector2,
@@ -28,13 +27,12 @@ impl Ball {
     }
 }
 
-impl StarterData for Vec<Vector2> {
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
-
 impl RendererData for Vec<Ball> {}
+
+#[derive(Deserialize, Clone)]
+struct BouncingBallStarterData {
+    positions: Vec<Vector2>
+}
 
 /// Represents a bouncing ball simulation.
 /// 
@@ -54,6 +52,66 @@ pub struct BouncingBallSimulation {
     default_color: Color
 }
 
+/// Obligatory implementation of the `SimulationTemplate` trait for the `BouncingBallSimulation` struct.
+impl SimulationTemplate for BouncingBallSimulation {
+    fn initialize(&mut self, renderer_size: Vector2, serialized_data: Option<String>) -> Result<(), String> {
+        self.renderer_size = renderer_size;
+
+        let starter_data: BouncingBallStarterData = match serialized_data {
+            Some(data) => match serde_json::from_str(&data) {
+                Ok(deserialized_data) => deserialized_data,
+                Err(e) => return Err(e.to_string())
+            },
+            None => return Ok(())
+        };
+
+        for position in starter_data.positions {
+            let ball = Ball::new(
+                position, self.default_velocity, self.default_radius, self.default_mass, self.default_color.clone()
+            );
+            self.push_ball(ball);
+        }
+
+        Ok(())
+    }
+
+    fn next_step(&mut self, dt: f32) -> Result<(), String> {
+        for ball in &mut self.balls {
+            // Apply gravity
+            ball.velocity += Vector2::down() * 9.81 * ball.mass * dt;
+            // Update position
+            ball.position += ball.velocity * dt;
+            // Check for collision with the renderer bounds
+            if ball.position.x - ball.radius < 0.0 {
+                ball.position.x = ball.radius;
+                ball.velocity.x *= -0.8;
+            }
+            if ball.position.x + ball.radius > self.renderer_size.x {
+                ball.position.x = self.renderer_size.x - ball.radius;
+                ball.velocity.x *= -0.8;
+            }
+            if ball.position.y - ball.radius < 0.0 {
+                ball.position.y = ball.radius;
+                ball.velocity.y *= -0.8;
+            }
+            if ball.position.y + ball.radius > self.renderer_size.y {
+                ball.position.y = self.renderer_size.y - ball.radius;
+                ball.velocity.y *= -0.8;
+            }
+            // Update color in function of the velocity
+            let normalized_velocity = ball.velocity.magnitude() / 1000.0;
+            ball.color = self.velocity_gradient.at(normalized_velocity as f64).to_hex_string();
+        }
+
+        Ok(())
+    }
+
+    fn get_data_to_render(&self) -> Result<Box<dyn RendererData>, String> {
+        Ok(Box::new(self.balls.clone()))
+    }
+}
+
+/// Custom implementation of the `BouncingBallSimulation` struct.
 impl BouncingBallSimulation {
 
     /// Creates a new `BouncingBallSimulation` instance with the given parameters.
@@ -110,67 +168,5 @@ impl BouncingBallSimulation {
     /// * `balls` - A mutable reference to a vector of balls to be appended to the simulation.
     pub fn append_balls(&mut self, balls: &mut Vec<Ball>) {
         self.balls.append(balls);
-    }
-}
-
-impl SimulationTemplate for BouncingBallSimulation {
-
-    // A revoir !!!
-    fn initialize(&mut self, renderer_size: Vector2, data: Option<Box<dyn StarterData>>) -> Result<(), String> {
-        self.renderer_size = renderer_size;
-
-        let content = match data {
-            Some(data) => data,
-            None => return Ok(())
-        };
-
-        let positions = match content.as_any().downcast_ref::<Vec<Vector2>>() {
-            Some(positions) => positions.clone(),
-            None => return Err("Invalid starter data type".to_string())
-        };
-
-        for position in positions {
-            let ball = Ball::new(
-                position, self.default_velocity, self.default_radius, self.default_mass, self.default_color.clone()
-            );
-            self.push_ball(ball);
-        }
-
-        Ok(())
-    }
-
-    fn next_step(&mut self, dt: f32) -> Result<(), String> {
-        for ball in &mut self.balls {
-            // Apply gravity
-            ball.velocity += Vector2::down() * 9.81 * ball.mass * dt;
-            // Update position
-            ball.position += ball.velocity * dt;
-            // Check for collision with the renderer bounds
-            if ball.position.x - ball.radius < 0.0 {
-                ball.position.x = ball.radius;
-                ball.velocity.x *= -0.8;
-            }
-            if ball.position.x + ball.radius > self.renderer_size.x {
-                ball.position.x = self.renderer_size.x - ball.radius;
-                ball.velocity.x *= -0.8;
-            }
-            if ball.position.y - ball.radius < 0.0 {
-                ball.position.y = ball.radius;
-                ball.velocity.y *= -0.8;
-            }
-            if ball.position.y + ball.radius > self.renderer_size.y {
-                ball.position.y = self.renderer_size.y - ball.radius;
-                ball.velocity.y *= -0.8;
-            }
-            // Update color in function of the velocity
-            let normalized_velocity = ball.velocity.magnitude() / 1000.0;
-            ball.color = self.velocity_gradient.at(normalized_velocity as f64).to_hex_string();
-        }
-
-        Ok(())
-    }
-
-    fn get_data_to_render(&self) -> Result<Box<dyn RendererData>, String> {
-        Ok(Box::new(self.balls.clone()))
     }
 }

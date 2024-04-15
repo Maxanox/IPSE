@@ -35,10 +35,14 @@
         return Math.floor(Math.random() * max);
     }
 
+    interface BouncingBallStarterData {
+        positions: Vector2[];
+    }
+
     async function spawnParticles() {
         launched = true;
 
-        let positions: Vector2[] = [];
+        let starter_data: BouncingBallStarterData = { positions: [] };
 
         for (let i = 0; i < particle_number; i++) {
             let particle = new PIXI.Sprite(PIXI.Texture.from(ParticleSrc));
@@ -46,13 +50,13 @@
             particle.anchor.set(0.5, 0.5);
             particle.x = getRandomInt(renderer_width);
             particle.y = getRandomInt(renderer_height);
-            positions.push({ x: particle.x, y: particle.y });
+            starter_data.positions.push({ x: particle.x, y: particle.y });
             particle_container.addChild(particle);
         }
 
         let renderer_size: Vector2 = { x: renderer_width, y: renderer_height };
 
-        await invoke('initialize_simulation', { rendererSize: renderer_size, data: positions }).catch((error) => err = error);
+        await invoke('initialize_simulation', { rendererSize: renderer_size, serializedData: JSON.stringify(starter_data)}).catch((error) => err = error);
         await invoke('run_simulation').catch((error) => err = error);
 
         duration_callback = setInterval(() => {
