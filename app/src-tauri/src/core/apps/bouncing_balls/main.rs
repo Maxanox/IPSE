@@ -29,7 +29,7 @@ impl BouncingBallSimulation {
     /// * `velocity_gradient` - The gradient used to determine the velocity of the balls.
     /// * `default_position` - The default position of the balls. If `None`, the default position is `Vector2::zero()`.
     /// * `default_velocity` - The default velocity of the balls. If `None`, the default velocity is `Vector2::zero()`.
-    /// * `default_radius` - The default radius of the balls. If `None`, the default radius is `1.0`.
+    /// * `default_radius` - The default radius of the balls. If `None`, the default radius is `15.0`.
     /// * `default_color` - The default color of the balls. If `None`, the default color is determined by the velocity gradient at 0.0.
     ///
     /// # Returns

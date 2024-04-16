@@ -11,10 +11,14 @@
         bouncing_ball
     </a>
 
-    {#if $navigating}
-        navigating to {$navigating.to?.url.pathname}
-    {/if}
+    <a href="/main/apps/bouncing_ball2" aria-current={$page.url.pathname === '/main/apps/bouncing_ball2'}>
+        bouncing_ball2
+    </a>
 </nav>
+
+{#if $navigating}
+    <h1>navigating to {$navigating.to?.url.pathname}...</h1>
+{/if}
 
 <style>
     .navigation {

@@ -67,7 +67,7 @@
     let unlistnen_drawParticles: UnlistenFn;
 
     onMount(async () => {
-        await invoke('select_simulation_template', { width: renderer_width, height: renderer_height, id: 0 }).catch((error) => err = error);
+        await invoke('select_simulation_template', { width: renderer_width, height: renderer_height, id: 1 }).catch((error) => err = error);
 
         unlistnen_drawParticles = await listen('render', async (event) => {
             let payload = event.payload as RendererData;

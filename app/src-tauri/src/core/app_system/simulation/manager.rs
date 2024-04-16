@@ -1,5 +1,6 @@
 use std::time::Instant;
 use std::sync::{Arc, Mutex};
+use colorgrad::Gradient;
 use serde::{Deserialize, Serialize};
 
 use crate::core::apps::bouncing_balls::main::BouncingBallSimulation;
@@ -144,16 +145,26 @@ impl SimulationManager {
 }
 
 #[tauri::command]
-pub async fn select_simulation_template(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>, width: f32, height: f32) -> Result<(), String> {
+pub async fn select_simulation_template(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>, width: f32, height: f32, id: u8) -> Result<(), String> {
     println!("Simulation template selecting...");
 
     let renderer = Renderer::new(Vector2::new(width, height), window);
-    let gradient = match colorgrad::CustomGradient::new().html_colors(&["#0077ff", "#24ff6f", "ffff20", "ff3131"]).domain(&[0.0, 0.5, 0.7, 1.0]).build() {
-        Ok(gradient) => gradient,
-        Err(e) => return Err(e.to_string())
-    };
 
-    let selected_template = BouncingBallSimulation::new(renderer.size, gradient, None, None, None, None);
+    let selected_template = match id {
+        0 => {
+            println!("Bouncing balls simulation1 selected");
+            let gradient = match colorgrad::CustomGradient::new().html_colors(&["#0077ff", "#24ff6f", "ffff20", "ff3131"]).domain(&[0.0, 0.5, 0.7, 1.0]).build() {
+                Ok(gradient) => gradient,
+                Err(e) => return Err(e.to_string())
+            };
+            BouncingBallSimulation::new(renderer.size, gradient, None, None, None, None)
+        },
+        1 => {
+            println!("Bouncing balls simulation2 selected");
+            BouncingBallSimulation::new(renderer.size, colorgrad::turbo(), None, None, None, None)
+        },
+        _ => return Err("Invalid simulation template ID".to_string())
+    };
 
     match simulation_manager.lock() {
         Ok(mut simulation_manager) => {
