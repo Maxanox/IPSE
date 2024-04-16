@@ -3,8 +3,8 @@
 
 use std::sync::{Arc, Mutex};
 
-mod simulation;
-use simulation::simulation_manager::{SimulationManager, select_simulation_template, initialize_simulation, run_simulation, stop_simulation, quit_simulation};
+mod core;
+use core::app_system::simulation::manager::{SimulationManager, select_simulation_template, initialize_simulation, run_simulation, stop_simulation, quit_simulation};
 
 fn main() -> Result<(), tauri::Error> {
   let simulation_manager = Arc::new(Mutex::new(SimulationManager::new()));

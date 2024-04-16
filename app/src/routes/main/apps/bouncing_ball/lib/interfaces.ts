@@ -7,3 +7,7 @@ export interface Ball {
     mass: number,
     color: string,
 }
+
+export interface RendererData {
+    balls: Ball[],
+}

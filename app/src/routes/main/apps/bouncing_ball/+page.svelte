@@ -12,7 +12,7 @@
     import { ParticleContainer } from 'svelte-pixi';
     import HBarQuickData from '$lib/components/app/UI/boxes/HBarQuickData.svelte';
     
-    import type { Ball } from './lib/interfaces';
+    import type { Ball, RendererData } from './lib/interfaces';
     import ParticleSrc from "./static/particle.png";
 
     let duration_callback: NodeJS.Timeout;
@@ -70,20 +70,20 @@
         await invoke('select_simulation_template', { width: renderer_width, height: renderer_height}).catch((error) => err = error);
 
         unlistnen_drawParticles = await listen('render', async (event) => {
-            let payload = event.payload as Ball[];
+            let payload = event.payload as RendererData;
 
-            if (payload.length !== particle_container.children.length) {
-                err = "Particle count mismatch : " + payload.length + " != " + particle_container.children.length;
+            if (payload.balls.length !== particle_container.children.length) {
+                err = "Particle count mismatch : " + payload.balls.length + " != " + particle_container.children.length;
             }
             else if (err === "Particle count mismatch") {
                 err = "";
             }
 
             particle_container.children.forEach((particle, index) => {
-                particle.x = payload[index].position.x;
-                particle.y = payload[index].position.y;
-                particle.tint = new PIXI.Color(payload[index].color);
-                particle.scale.set(payload[index].radius/64);
+                particle.x = payload.balls[index].position.x;
+                particle.y = payload.balls[index].position.y;
+                particle.tint = new PIXI.Color(payload.balls[index].color);
+                particle.scale.set(payload.balls[index].radius/64);
             });
 
             step++;

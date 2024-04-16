@@ -1,5 +1,6 @@
-use crate::simulation::renderer::RendererData;
-use crate::simulation::custom_maths::vector2::Vector2;
+use crate::core::sciences::maths::vector2::Vector2;
+
+use super::renderer::DataToSend;
 
 
 /// The `SimulationTemplate` trait is used by `SimulationManager` to run different
@@ -41,5 +42,5 @@ pub trait SimulationTemplate: Send {
     ///
     /// Returns `Ok` with a boxed trait object implementing `RendererData` if the data retrieval was successful,
     /// otherwise returns an error message as a `String`.
-    fn get_data_to_render(&self) -> Result<Box<dyn RendererData>, String>;
+    fn get_data_to_render(&self) -> Result<Box<dyn DataToSend>, String>;
 }

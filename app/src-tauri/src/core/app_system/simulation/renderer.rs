@@ -1,13 +1,11 @@
-use std::any::Any;
-
 use erased_serde::serialize_trait_object;
 
-use super::custom_maths::vector2::Vector2;
+use crate::core::sciences::maths::vector2::Vector2;
 
-/// A trait for renderer data that can be serialized using erased_serde.
-pub trait RendererData: erased_serde::Serialize {}
+/// A trait for data to send to the frontend, that can be serialized using erased_serde.
+pub trait DataToSend: erased_serde::Serialize {}
 
-serialize_trait_object!(RendererData);
+serialize_trait_object!(DataToSend);
 
 /// Represents a renderer for simulations.
 pub struct Renderer {
@@ -42,7 +40,7 @@ impl Renderer {
     /// # Returns
     ///
     /// An `Ok` result if the rendering was successful, otherwise an `Err` containing an error message.
-    pub fn render(&self, data: Box<dyn RendererData>) -> Result<(), String> {
+    pub fn render(&self, data: Box<dyn DataToSend>) -> Result<(), String> {
         match self.window.emit("render", &data) {
             Ok(_) => Ok(()),
             Err(e) => Err(e.to_string())

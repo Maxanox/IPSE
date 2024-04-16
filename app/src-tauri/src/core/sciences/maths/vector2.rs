@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use std::ops::{Add, Mul, Div, Sub, AddAssign, SubAssign, MulAssign, DivAssign};
 
+/// Represente un vecteur 2D
 #[derive(Copy, Serialize, Deserialize, Clone)]
 pub struct Vector2 {
   pub x: f32,

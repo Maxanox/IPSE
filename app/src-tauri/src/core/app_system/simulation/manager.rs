@@ -2,12 +2,12 @@ use std::time::Instant;
 use std::sync::{Arc, Mutex};
 use serde::{Deserialize, Serialize};
 
-use crate::simulation::renderer::Renderer;
-use crate::simulation::simulation_template::SimulationTemplate;
-use crate::simulation::frame_history::FrameHistory;
-use crate::simulation::templates::bouncing_balls::BouncingBallSimulation;
+use crate::core::apps::bouncing_balls::main::BouncingBallSimulation;
+use crate::core::sciences::maths::vector2::Vector2;
 
-use super::custom_maths::vector2::Vector2;
+use super::renderer::Renderer;
+use super::template::SimulationTemplate;
+use super::frame_history::FrameHistory;
 
 #[derive(Serialize, Deserialize)]
 pub enum SimulationTemplateEnum {
