@@ -82,7 +82,7 @@
             particle_container.children.forEach((particle, index) => {
                 particle.x = payload.balls[index].position.x;
                 particle.y = payload.balls[index].position.y;
-                particle.tint = new PIXI.Color(payload.balls[index].color);
+                particle.tint = parseInt(payload.balls[index].color.replace('#', '0x'));
                 particle.scale.set(payload.balls[index].radius/64);
             });
 

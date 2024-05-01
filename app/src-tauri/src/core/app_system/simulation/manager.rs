@@ -146,7 +146,7 @@ impl SimulationManager {
 
 #[tauri::command]
 pub async fn select_simulation_template(window: tauri::Window, simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>, width: f32, height: f32, id: u8) -> Result<(), String> {
-    println!("Simulation template selecting...");
+    println!("Simulation template selecting... (id: {})", id);
 
     let renderer = Renderer::new(Vector2::new(width, height), window);
 
