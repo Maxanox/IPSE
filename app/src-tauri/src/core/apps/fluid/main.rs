@@ -203,25 +203,53 @@ impl Fluid {
     pub fn update(&mut self, dt: f32) -> () {
         //let dt = dt * 1.5;
 
-        // Apply gravity and update densities
+        // Apply gravity and predicted positions
         (0..self.particles.len()).for_each(|i| {
             self.particles.velocities[i] += Vector2::down() * self.gravity * dt;
             self.particles.predicted_positions[i] = self.particles.positions[i] + self.particles.velocities[i] * dt;
         });
 
-        // Calculate densities
-        (0..self.particles.len()).for_each(|i| {
-            self.particles.densities[i] = self.calculate_density(i);
-        });
+        if self.visual_filter == 3 {
+            // Calculate densities
+            (0..self.particles.len()).for_each(|i| {
+                self.particles.densities[i] = self.calculate_density(i);
+                self.particles.colors[i] = self.velocity_gradient.at((self.particles.densities[i] * 1000.0 / self.particles.target_density) as f64).to_hex_string();
+            });
+        } else {
+            // Calculate densities
+            (0..self.particles.len()).for_each(|i| {
+                self.particles.densities[i] = self.calculate_density(i);
+            });
+        }
 
-        // Calculate and apply pressure forces
-        (0..self.particles.len()).for_each(|i| {
-            let pressure_force = self.calculate_pressure_force(i);
-            assert!(self.particles.densities[i] != 0.0, "density should not be zero");
-            let pressure_acceleration = pressure_force / self.particles.densities[i];
-            self.particles.velocities[i] += pressure_acceleration * dt;
-            self.particles.colors[i] = self.velocity_gradient.at((self.particles.velocities[i].magnitude() / 100.0) as f64).to_hex_string();
-        });
+        if self.visual_filter == 1 {
+            // Calculate and apply pressure forces
+            (0..self.particles.len()).for_each(|i| {
+                let pressure_force = self.calculate_pressure_force(i);
+                assert!(self.particles.densities[i] != 0.0, "density should not be zero");
+                let pressure_acceleration = pressure_force / self.particles.densities[i];
+                self.particles.velocities[i] += pressure_acceleration * dt;
+                self.particles.colors[i] = self.velocity_gradient.at((self.particles.velocities[i].magnitude() / 100.0) as f64).to_hex_string();
+            });
+        } else if self.visual_filter == 2 {
+            // Calculate and apply pressure forces
+            (0..self.particles.len()).for_each(|i| {
+                let pressure_force = self.calculate_pressure_force(i);
+                self.particles.colors[i] = self.velocity_gradient.at((pressure_force.magnitude() * 100.0) as f64).to_hex_string();
+                assert!(self.particles.densities[i] != 0.0, "density should not be zero");
+                let pressure_acceleration = pressure_force / self.particles.densities[i];
+                self.particles.velocities[i] += pressure_acceleration * dt;
+            });
+        }
+        else {
+            // Calculate and apply pressure forces
+            (0..self.particles.len()).for_each(|i| {
+                let pressure_force = self.calculate_pressure_force(i);
+                assert!(self.particles.densities[i] != 0.0, "density should not be zero");
+                let pressure_acceleration = pressure_force / self.particles.densities[i];
+                self.particles.velocities[i] += pressure_acceleration * dt;
+            });
+        }
 
         // Update positions and resolve collisions
         (0..self.particles.len()).for_each(|i| {

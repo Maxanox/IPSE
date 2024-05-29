@@ -2,6 +2,7 @@
     import { listen, type UnlistenFn } from '@tauri-apps/api/event';
     import { invoke } from '@tauri-apps/api/tauri';
     import { onDestroy, onMount } from 'svelte';
+    import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
     
     import type { Vector2 } from '$lib/components/app/Interfaces/vector2.ts';
     import App from '$lib/components/app/App/App.svelte';
@@ -17,8 +18,8 @@
 
     let duration_callback: NodeJS.Timeout;
 
-    let renderer_width: number;
-    let renderer_height: number;
+    let renderer_width: number = 1000;
+    let renderer_height: number = 600;
     let particle_container: PIXI.ParticleContainer;
 
     let step = 0;
@@ -30,6 +31,20 @@
     let particle_number = 1;
     let speed_coef = 1;
     let err = "";
+
+    let event_settings: EventSettings = { 
+        collision_restitution: 0.95,
+        gravity: 0,
+        target_density: 0.75,
+        mass: 50,
+        pressure_stiffness: 3.5,
+        visual_filter: 0,
+        smoothing_radius: 30,
+    };
+
+    $ : {
+        invoke('send_event_to_simulation', { event: "set_settings", data: JSON.stringify(event_settings) }).catch((error) => {if (launched) {err = error}});
+    }
 
     function getRandomInt(max: number) {
         return Math.floor(Math.random() * max);
@@ -66,16 +81,6 @@
         let renderer_size: Vector2 = { x: renderer_width, y: renderer_height };
 
         await invoke('initialize_simulation', { rendererSize: renderer_size, serializedData: JSON.stringify(starter_data)}).catch((error) => err = error);
-
-        let event_settings: EventSettings = { 
-            collision_restitution: 0.95,
-            gravity: 0,
-            target_density: 0.75,
-            mass: 50,
-            pressure_stiffness: 3.5,
-            visual_filter: 0,
-            smoothing_radius: 30,
-        };
 
         await invoke('send_event_to_simulation', { event: 'set_settings', data: JSON.stringify(event_settings) }).catch((error) => err = error);
 
@@ -140,32 +145,90 @@
     </svelte:fragment>
 
     <!-- default slot -->
-    <div class="flex flex-col items-center justify-center gap-5">
-        <Renderer bind:width={renderer_width} bind:height={renderer_height} controls={false}>
-            <ParticleContainer
-                bind:instance={particle_container}
-                autoResize
-                properties={{
-                    position: true,
-                    tint: true,
-                    scale: true
-                }}
-            />
-        </Renderer>
-        
-        {#if !launched}
-            <label>
-                Particle Count: {particle_number}
-                <input type="range" bind:value={particle_number} min="1" max="900" />
-            </label>
-            <button type="button" class="btn variant-filled" on:click={spawnParticles}>Spawn</button>
-        {:else}
-            <label>
-                <input type="range" bind:value={speed_coef} min="0" max="10" />
+    <div class="flex flex-row">
+        <div class="card p-4 flex flex-col gap-5">
+            <label class="label">
+                <input type="number" class="badge variant-filled mr-1" 
+                    bind:value={event_settings.mass} min={0} max={100}
+                />
+                <span>Mass</span>
+                <input type="range" bind:value={event_settings.mass} min={0} max={100}/>
             </label>
 
-            <span class="text-red-500">{err}</span>
-        {/if}
+            <label>
+                <input type="number" class="badge variant-filled mr-1" 
+                    bind:value={event_settings.gravity} min={0} max={100}
+                />
+                <span>Gravity</span>
+                <input type="range" bind:value={event_settings.gravity} min={0} max={100} />
+            </label>
+
+            <label>
+                <input type="number" class="badge variant-filled mr-1" 
+                    bind:value={event_settings.collision_restitution} min={0} max={1} step={0.01}
+                />
+                <span>Collision restitution</span>
+                <input type="range" bind:value={event_settings.collision_restitution} min={0} max={1} step={0.01}/>
+            </label>
+
+            <label>
+                <input type="number" class="badge variant-filled mr-1" 
+                    bind:value={event_settings.pressure_stiffness} min={0} max={10}
+                />
+                <span>Pressure Multiplier</span>
+                <input type="range" bind:value={event_settings.pressure_stiffness} min={0} max={10}/>
+            </label>
+
+            <label>
+                <input type="number" class="badge variant-filled mr-1" 
+                    bind:value={event_settings.target_density} min={0} max={10} step={0.25}
+                />
+                <span>Target Density</span>
+                <input type="range" bind:value={event_settings.target_density} min={0} max={10} step={0.25}/>
+            </label>
+
+            <label>
+                <input type="number" class="badge variant-filled mr-1" 
+                    bind:value={event_settings.smoothing_radius} min={1} max={100}
+                />
+                <span>Smoothing Radius</span>
+                <input type="range" bind:value={event_settings.smoothing_radius} min={1} max={100}/>
+            </label>
+
+            <label class="label">
+                <span>Visual Filter</span>
+                <select class="select" bind:value={event_settings.visual_filter}>
+                    <option value={0}>Default</option>
+                    <option value={1}>Velocity</option>
+                    <option value={2}>Pressure</option>
+                    <option value={3}>Density</option>
+                </select>
+            </label>
+        </div>
+        
+        <div class="flex flex-col items-center justify-center gap-5 m-auto">
+            <Renderer bind:width={renderer_width} bind:height={renderer_height} controls={launched}>
+                <ParticleContainer
+                    bind:instance={particle_container}
+                    autoResize
+                    properties={{
+                        position: true,
+                        tint: true,
+                        scale: true
+                    }}
+                />
+            </Renderer>
+            
+            {#if !launched}
+                <label>
+                    Particle Count: {particle_number}
+                    <input type="range" bind:value={particle_number} min="1" max="900" />
+                </label>
+                <button type="button" class="btn variant-filled" on:click={spawnParticles}>Spawn</button>
+            {:else}
+                <span class="text-red-500">{err}</span>
+            {/if}
+        </div>
     </div>
     <!-- /default slot -->
 </App>
