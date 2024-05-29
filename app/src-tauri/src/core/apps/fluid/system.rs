@@ -41,4 +41,31 @@ impl SimulationTemplate for Fluid {
         
         Ok(Box::new(data_to_render))
     }
+
+    fn event_handler(&mut self, event: String, data: Option<String>) -> Result<(), String> {
+        match event.as_str() {
+            "set_settings" => {
+                match data {
+                    Some(data) => {
+                        let settings: EventSettings = match serde_json::from_str(&data) {
+                            Ok(deserialized_data) => deserialized_data,
+                            Err(e) => return Err(e.to_string())
+                        };
+
+                        self.collision_restitution = settings.collision_restitution;
+                        self.gravity = settings.gravity;
+                        self.particles.target_density = settings.target_density;
+                        self.set_mass(settings.mass);
+                        self.particles.pressure_multiplier = settings.pressure_stiffness;
+                        self.visual_filter = settings.visual_filter;
+                        self.particles.smoothing_radius = settings.smoothing_radius;
+                    },
+                    None => return Err("No data provided for the 'set_settings' event".to_string())
+                }
+            },
+            _ => return Err("Unknown event".to_string())
+        }
+
+        Ok(())
+    }
 }

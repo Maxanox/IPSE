@@ -61,6 +61,9 @@ impl FluidParticles {
 pub struct Fluid {
     // FLUID PROPERTIES
     pub particles: FluidParticles,
+    pub gravity: f32,
+    pub visual_filter: u8,
+    pub collision_restitution: f32,
     mass: f32,
     // BOUNDARY PROPERTIES
     pub box_bound_x: f32,
@@ -73,10 +76,12 @@ impl Fluid {
     pub fn new(velocity_gradient: Gradient) -> Self {
         //let particles = FluidParticles::new(0.0, 5.0, 0.5, 3.0, 30.0); # diffusion gazeuse
         let particles = FluidParticles::new(0.0, 5.0, 0.75, 3.5, 30.0);
-        //particles.push(Vector2::new(400.0, 300.0));
         let mut fluid = Fluid {
             // FLUID PROPERTIES
             particles,
+            gravity: 0.0,
+            visual_filter: 0,
+            collision_restitution: 0.95,
             mass: 50.0,
             // BOUNDARY PROPERTIES
             box_bound_x: 800.0,
@@ -197,11 +202,10 @@ impl Fluid {
 
     pub fn update(&mut self, dt: f32) -> () {
         //let dt = dt * 1.5;
-        //let gravity = 200.0;
 
         // Apply gravity and update densities
         (0..self.particles.len()).for_each(|i| {
-            //self.particles.velocities[i] += Vector2::down() * gravity * self.particles.mass * dt;
+            self.particles.velocities[i] += Vector2::down() * self.gravity * dt;
             self.particles.predicted_positions[i] = self.particles.positions[i] + self.particles.velocities[i] * dt;
         });
 

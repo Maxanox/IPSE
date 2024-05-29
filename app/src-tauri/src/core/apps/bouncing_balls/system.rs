@@ -66,4 +66,22 @@ impl SimulationTemplate for BouncingBallSimulation {
         
         Ok(Box::new(data_to_render))
     }
+
+    fn event_handler(&mut self, event: String, data: Option<String>) -> Result<(), String> {
+        match event.as_str() {
+            "add_ball" => {
+                let ball = Ball::new(
+                    Vector2::new(self.renderer_size.x / 2.0, self.renderer_size.y / 2.0),
+                    self.default_velocity,
+                    self.default_radius,
+                    self.default_mass,
+                    self.default_color.clone()
+                );
+                self.push_ball(ball);
+            },
+            _ => return Err("Unknown event".to_string())
+        }
+
+        Ok(())
+    }
 }

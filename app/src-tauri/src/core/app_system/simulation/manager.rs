@@ -1,7 +1,5 @@
 use std::time::Instant;
 use std::sync::{Arc, Mutex};
-use colorgrad::Gradient;
-use serde::{Deserialize, Serialize};
 
 use crate::core::sciences::maths::vector2::Vector2;
 use crate::core::apps::bouncing_balls::main::BouncingBallSimulation;
@@ -266,4 +264,17 @@ pub async fn quit_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<Simu
     println!("Simulation quit");
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn send_event_to_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<SimulationManager>>>, event: String, data: Option<String>) -> Result<(), String> {
+    match simulation_manager.lock() {
+        Ok(mut simulation_manager) => {
+            match simulation_manager.simulation.as_mut() {
+                Some(simulation) => simulation.event_handler(event, data),
+                None => Err("No simulation template set".to_string())
+            }
+        },
+        Err(e) => return Err(e.to_string())
+    }
 }

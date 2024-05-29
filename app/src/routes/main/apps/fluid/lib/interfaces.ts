@@ -35,3 +35,25 @@ export interface FluidParticles {
 export interface RendererData {
     fluid_particles: FluidParticles,
 }
+
+/*
+pub struct EventSettings {
+    pub collision_restitution: f32,
+    pub gravity: f32,
+    pub target_density: f32,
+    pub mass: f32,
+    pub pressure_stiffness: f32,
+    pub visual_filter: u8,
+    pub smoothing_radius: f32
+}
+*/
+
+export interface EventSettings {
+    collision_restitution: number,
+    gravity: number,
+    target_density: number,
+    mass: number,
+    pressure_stiffness: number,
+    visual_filter: number,
+    smoothing_radius: number
+}

@@ -12,7 +12,7 @@
     import { ParticleContainer } from 'svelte-pixi';
     import HBarQuickData from '$lib/components/app/UI/boxes/HBarQuickData.svelte';
     
-    import type { FluidStarterData, RendererData } from './lib/interfaces';
+    import type { FluidStarterData, RendererData, EventSettings } from './lib/interfaces';
     import ParticleSrc from "./static/particle.png";
 
     let duration_callback: NodeJS.Timeout;
@@ -66,6 +66,19 @@
         let renderer_size: Vector2 = { x: renderer_width, y: renderer_height };
 
         await invoke('initialize_simulation', { rendererSize: renderer_size, serializedData: JSON.stringify(starter_data)}).catch((error) => err = error);
+
+        let event_settings: EventSettings = { 
+            collision_restitution: 0.95,
+            gravity: 0,
+            target_density: 0.75,
+            mass: 50,
+            pressure_stiffness: 3.5,
+            visual_filter: 0,
+            smoothing_radius: 30,
+        };
+
+        await invoke('send_event_to_simulation', { event: 'set_settings', data: JSON.stringify(event_settings) }).catch((error) => err = error);
+
         await invoke('run_simulation').catch((error) => err = error);
 
         duration_callback = setInterval(() => {

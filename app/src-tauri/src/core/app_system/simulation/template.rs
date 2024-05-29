@@ -43,4 +43,19 @@ pub trait SimulationTemplate: Send {
     /// Returns `Ok` with a boxed trait object implementing `RendererData` if the data retrieval was successful,
     /// otherwise returns an error message as a `String`.
     fn get_data_to_render(&self) -> Result<Box<dyn DataToSend>, String>;
+
+    /// Handles an event for the simulation.
+    /// 
+    /// This method is called by the `SimulationManager` when an event is received.
+    /// Usually, we match the event to a specific action in the simulation.
+    ///
+    /// # Arguments
+    ///
+    /// * `event` - The event as a `String`.
+    /// * `data` - Additional data associated with the event as an optional json `String`.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the event was handled successfully, otherwise returns an error message as a `String`.
+    fn event_handler(&mut self, event: String, data: Option<String>) -> Result<(), String>;
 }
