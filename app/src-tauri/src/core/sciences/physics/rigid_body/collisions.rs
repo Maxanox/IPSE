@@ -335,14 +335,14 @@ pub fn find_contact_points(body_s:&mut Vec<RigidBody>,idx_a:usize,idx_b:usize)->
             (c1,c2,cn)=find_contact_point_bb(body_a_tfv,body_b_tfv);
         }
         else if which_shape(shape_b)==0 {
-            c1=find_contact_point_cb(body_b_p,body_s[idx_b].radius,body_a_p,body_a_tfv);
+            c1=find_contact_point_cb(body_b_p,body_a_tfv);
             cn = 1;
         }
     }
     else if which_shape(shape_a)==0 {
 
         if which_shape(shape_b)==1 {
-            c1=find_contact_point_cb(body_a_p,body_s[idx_a].radius,body_b_p,body_b_tfv);
+            c1=find_contact_point_cb(body_a_p,body_b_tfv);
             cn = 1;
         }
         else if which_shape(shape_b)==0 {
