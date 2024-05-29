@@ -94,7 +94,7 @@ impl <'a> WorkSpace<'a>{
 
 
 
-
+#[allow(dead_code)]
 pub fn resolve_collision_basic(body_s:&mut Vec<& mut RigidBody>, mani: ManiFold){
     let idx_a = mani.get_body_a();
     let idx_b = mani.get_body_b();
