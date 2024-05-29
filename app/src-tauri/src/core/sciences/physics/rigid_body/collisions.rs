@@ -352,7 +352,7 @@ pub fn find_contact_points(body_s:&mut Vec<RigidBody>,idx_a:usize,idx_b:usize)->
     }
     (c1,c2,cn)
 }
-pub fn find_contact_point_cb(center_c: Vector2D, rad_c:f64,center_b:Vector2D,vertices:&mut Vec<Vector2D>)->Vector2D{
+pub fn find_contact_point_cb(center_c: Vector2D,vertices:&mut Vec<Vector2D>)->Vector2D{
     let l = vertices.len();
     let mut cp = vec_zero();
     let mut min_dsq = f64::MAX;

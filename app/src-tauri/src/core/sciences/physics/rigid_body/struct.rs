@@ -3,7 +3,7 @@
 //use std::f64::consts::PI;
 //use std::cmp::Ordering;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize};
 use std::f64::consts::PI;
 use super::flatrgb::{triangulate_box, which_shape};
 use super::vectormath::{c_vect, vec_zero};
