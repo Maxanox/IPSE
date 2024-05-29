@@ -134,12 +134,12 @@ pub fn resolve_collision_with_rotation(body_s:&mut Vec<&mut RigidBody>,mani:Mani
     let mut ra_list = vec![vec_zero();2];
     let mut rb_list = vec![vec_zero();2];
 
-    for i in 0..cn{
+    for i in 0..(cn as usize){
         let ra = mn(contact_list[i],body_a_p);
         let rb = mn(contact_list[i],body_b_p);
 
         ra_list[i]=ra;
-        rb_list[i]=ra;;
+        rb_list[i]=ra;
 
         let ra_perp = c_vect(ra.y*(-1.0),ra.x);
         let rb_perp = c_vect(rb.y*(-1.0),rb.x);
@@ -171,7 +171,7 @@ pub fn resolve_collision_with_rotation(body_s:&mut Vec<&mut RigidBody>,mani:Mani
         let impulse= dot_s(normal,j);
         each_impulses[i]=impulse;
 
-        for k in 0..cn{
+        for k in 0..(cn as usize){
             let imp: Vector2D= each_impulses[k];
             body_s[idx_a].linear_velocity = sm(body_s[idx_a].linear_velocity,dot_s(dot_s(imp,-1.0),body_s[idx_a].inv_mass));
             body_s[idx_a].angular_velocity = (imp.cross(ra_list[k]))*(-1.0)*body_a_inv_inertia;

@@ -176,7 +176,7 @@ pub fn create_circle_body(rad:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world:WorkS
 
 }
 #[allow(dead_code)]
-pub fn create_circle_body_check(rad:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world : WorkSpace)->Option<RigidBody>{
+pub fn create_circle_body_check(rad:f64,d:f64,b:bool,rest:f64,world : WorkSpace)->Option<RigidBody>{
     let area_a = rad*rad*PI;
     if area_a < world.mn_bs  { return None; }
     if area_a > world.mx_bs {return  None;}
@@ -202,7 +202,7 @@ pub fn create_box_body(width:f64,height : f64,pos:Vector2D,d:f64,b:bool,rest:f64
 
 }
 
-pub fn create_box_body_check(width:f64,height:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world : WorkSpace)->Option<RigidBody>{
+pub fn create_box_body_check(width:f64,height:f64,d:f64,b:bool,rest:f64,world : WorkSpace)->Option<RigidBody>{
     let area_a = width*height;
     if area_a < world.mn_bs  { return None; }
     if area_a > world.mx_bs {return  None;}
