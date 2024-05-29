@@ -7,7 +7,7 @@ use super::vectormath::{dot_s, sm, mn, c_vect, vec_zero};
 
 //static mut BODIES : Option<Vec<RigidBody>> = None;
 
-impl <'a> WorkSpace<'a>{
+impl WorkSpace{
 
     #[allow(dead_code)]
     pub fn broad_phase(&mut self){
@@ -46,7 +46,7 @@ impl <'a> WorkSpace<'a>{
         }
     }
     #[allow(dead_code)]
-    pub fn add_body(&mut self, body: &'a mut RigidBody) {
+    pub fn add_body(&mut self, body:RigidBody) {
         self.body_list.push(body);
         self.body_list[self.body_count].index = self.body_count as  i32;
         self.body_count+=1;
@@ -95,7 +95,7 @@ impl <'a> WorkSpace<'a>{
 
 
 #[allow(dead_code)]
-pub fn resolve_collision_basic(body_s:&mut Vec<& mut RigidBody>, mani: ManiFold){
+pub fn resolve_collision_basic(body_s:&mut Vec<RigidBody>, mani: ManiFold){
     let idx_a = mani.get_body_a();
     let idx_b = mani.get_body_b();
     let normal = mani.get_normal();
@@ -110,7 +110,7 @@ pub fn resolve_collision_basic(body_s:&mut Vec<& mut RigidBody>, mani: ManiFold)
     body_s[idx_b].linear_velocity = sm(body_s[idx_b].linear_velocity,dot_s(impulse,body_s[idx_b].inv_mass));
 }
 
-pub fn resolve_collision_with_rotation(body_s:&mut Vec<&mut RigidBody>,mani:ManiFold){
+pub fn resolve_collision_with_rotation(body_s:&mut Vec<RigidBody>,mani:ManiFold){
     let idx_a = mani.get_body_a();
     let idx_b = mani.get_body_b();
 
@@ -183,7 +183,7 @@ pub fn resolve_collision_with_rotation(body_s:&mut Vec<&mut RigidBody>,mani:Mani
 }
 
 
-pub fn separate_bodies(body_list:&mut Vec<& mut RigidBody>,idx_a:usize,idx_b:usize,norm:Vector2D,depth:f64){
+pub fn separate_bodies(body_list:&mut Vec<RigidBody>,idx_a:usize,idx_b:usize,norm:Vector2D,depth:f64){
     if body_list[idx_a].is_static {
         body_list[idx_b].moves(dot_s(norm, depth));
     } else if body_list[idx_b].is_static {

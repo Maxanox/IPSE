@@ -3,11 +3,12 @@
 //use std::f64::consts::PI;
 //use std::cmp::Ordering;
 
+use serde::{Serialize, Deserialize};
 use std::f64::consts::PI;
 use super::flatrgb::{triangulate_box, which_shape};
 use super::vectormath::{c_vect, vec_zero};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Deserialize,  Debug, Clone, Copy)]
 pub struct Vector2D {
     pub x : f64,
     pub y : f64,
@@ -262,21 +263,21 @@ impl FlatTransform {
 
 
 #[derive(Debug)]
-pub struct WorkSpace<'a>{
+pub struct WorkSpace{
     pub mn_bs : f64,
     pub mx_bs : f64,
     pub mn_d : f64,
     pub mx_d : f64,
     pub min_iter:i32,
     pub max_iter:i32,
-    pub body_list:Vec<&'a mut RigidBody>,
+    pub body_list:Vec<RigidBody>,
     pub gravity: Vector2D,
     pub body_count : usize,
     pub contact_pair : Vec<(usize,usize)>
 }
 
 #[allow(dead_code)]
-impl <'a> WorkSpace<'a> {
+impl  WorkSpace {
     pub fn get_mn_bs(&self) -> f64 { self.mn_bs }
 
     pub fn set_mn_bs(&mut self, mn_bs: f64) { self.mn_bs = mn_bs; }
@@ -301,11 +302,11 @@ impl <'a> WorkSpace<'a> {
 
     pub fn set_max_iter(&mut self, max_iter: i32) { self.max_iter = max_iter; }
 
-    pub fn get_body_list(&self) -> &Vec<&'a mut RigidBody> { &self.body_list }
+    pub fn get_body_list(&self) -> &Vec<RigidBody> { &self.body_list }
 
-    pub fn set_body_list(&mut self, body_list:  Vec<&'a mut RigidBody>) { self.body_list = body_list; }
+    pub fn set_body_list(&mut self, body_list:  Vec<RigidBody>) { self.body_list = body_list; }
 
-    pub fn get_body_in(&self,index:usize) -> &&mut RigidBody { &self.body_list[index] }
+    pub fn get_body_in(&self,index:usize) -> RigidBody { self.body_list[index].clone() }
 
     pub fn get_gravity(&self) -> &Vector2D { &self.gravity }
 
@@ -315,7 +316,7 @@ impl <'a> WorkSpace<'a> {
 
     pub fn set_body_count(&mut self, body_count: usize) { self.body_count = body_count; }
 
-    pub fn new()->WorkSpace<'a> {
+    pub fn new()->WorkSpace {
         WorkSpace {
             mn_bs: 0.01 * 0.01,
             mx_bs: 64.0 * 64.0,

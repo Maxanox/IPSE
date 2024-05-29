@@ -170,8 +170,8 @@ pub fn triangulate_box()->Vec<i32>{
 }
 
 #[allow(dead_code)]
-pub fn create_circle_body(rad:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world:WorkSpace)->RigidBody{
-    let j = create_circle_body_check(rad,pos,d,b,rest,world);
+pub fn create_circle_body(rad:f64,d:f64,b:bool,rest:f64,world:WorkSpace)->RigidBody{
+    let j = create_circle_body_check(rad,d,b,rest,world);
     j.unwrap()
 
 }
@@ -196,8 +196,8 @@ pub fn create_circle_body_check(rad:f64,d:f64,b:bool,rest:f64,world : WorkSpace)
 }
 
 #[allow(dead_code)]
-pub fn create_box_body(width:f64,height : f64,pos:Vector2D,d:f64,b:bool,rest:f64,world:WorkSpace)->RigidBody{
-    let j = super::flatrgb::create_box_body_check(width,height, pos, d, b, rest, world);
+pub fn create_box_body(width:f64,height : f64,d:f64,b:bool,rest:f64,world:WorkSpace)->RigidBody{
+    let j = super::flatrgb::create_box_body_check(width,height, d, b, rest, world);
     j.unwrap()
 
 }

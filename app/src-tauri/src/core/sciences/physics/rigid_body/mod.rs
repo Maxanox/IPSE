@@ -1,9 +1,9 @@
-mod r#struct;
-mod physics;
-mod vectormath;
-mod flatrgb;
-mod collisions;
-mod flattransfom;
-mod workspace;
-mod flataabb;
-mod flatmanifold;
+pub mod r#struct;
+pub mod physics;
+pub mod vectormath;
+pub mod flatrgb;
+pub mod collisions;
+pub mod flattransfom;
+pub mod workspace;
+pub mod flataabb;
+pub mod flatmanifold;

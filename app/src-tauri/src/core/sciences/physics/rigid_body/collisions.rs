@@ -12,7 +12,7 @@ pub fn intersect_aabbs(a: AABB, b: AABB)->bool{
 
 
 
-pub fn collide(bodylist:&mut Vec<& mut RigidBody>,idx_a : usize, idx_b : usize)->(bool,Vector2D,f64){
+pub fn collide(bodylist:&mut Vec<RigidBody>,idx_a : usize, idx_b : usize)->(bool,Vector2D,f64){
     let mut normal : Vector2D = vec_zero();
     let mut depth :f64 =f64::MAX;
     let shape_a:ShapeType = bodylist[idx_a].shape;
@@ -318,7 +318,7 @@ pub fn check_intersection_circles(bodies :&mut Vec<RigidBody>){
     }
 }
 
-pub fn find_contact_points(body_s:&mut Vec<& mut RigidBody>,idx_a:usize,idx_b:usize)->(Vector2D,Vector2D,i32){
+pub fn find_contact_points(body_s:&mut Vec<RigidBody>,idx_a:usize,idx_b:usize)->(Vector2D,Vector2D,i32){
     let body_a_p =body_s[idx_a].get_position();
     let body_b_p =body_s[idx_b].get_position() ;
 
