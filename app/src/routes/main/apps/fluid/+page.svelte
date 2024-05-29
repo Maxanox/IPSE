@@ -12,7 +12,7 @@
     import { ParticleContainer } from 'svelte-pixi';
     import HBarQuickData from '$lib/components/app/UI/boxes/HBarQuickData.svelte';
     
-    import type { Ball, RendererData } from './lib/interfaces';
+    import type { FluidStarterData, RendererData } from './lib/interfaces';
     import ParticleSrc from "./static/particle.png";
 
     let duration_callback: NodeJS.Timeout;
@@ -35,23 +35,32 @@
         return Math.floor(Math.random() * max);
     }
 
-    interface BouncingBallStarterData {
-        positions: Vector2[];
-    }
-
     async function spawnParticles() {
         launched = true;
 
-        let starter_data: BouncingBallStarterData = { positions: [] };
+        let starter_data: FluidStarterData = { positions: [] };
 
-        for (let i = 0; i < particle_number; i++) {
+        const squareSize = renderer_height / 3;
+        const squareX = (renderer_width - squareSize) / 2;
+        const squareY = (renderer_height - squareSize) / 2;
+
+        let particleIndex = 0;
+        for (let y = squareY; y < squareY + squareSize; y += squareSize / Math.sqrt(particle_number)) {
+            for (let x = squareX; x < squareX + squareSize; x += squareSize / Math.sqrt(particle_number)) {
             let particle = new PIXI.Sprite(PIXI.Texture.from(ParticleSrc));
-            // particle.tint = 0x0077ff; // Set particle color to ideal blue resembling water
             particle.anchor.set(0.5, 0.5);
-            particle.x = getRandomInt(renderer_width);
-            particle.y = getRandomInt(renderer_height);
+            particle.x = x;
+            particle.y = y;
             starter_data.positions.push({ x: particle.x, y: particle.y });
             particle_container.addChild(particle);
+            particleIndex++;
+            if (particleIndex >= particle_number) {
+                break;
+            }
+            }
+            if (particleIndex >= particle_number) {
+            break;
+            }
         }
 
         let renderer_size: Vector2 = { x: renderer_width, y: renderer_height };
@@ -71,19 +80,24 @@
 
         unlistnen_drawParticles = await listen('render', async (event) => {
             let payload = event.payload as RendererData;
-
-            if (payload.balls.length !== particle_container.children.length) {
-                err = "Particle count mismatch : " + payload.balls.length + " != " + particle_container.children.length;
+            let fluid_particles = payload.fluid_particles;
+            
+            if (!payload) {
+                err = "No payload received";
+                return;
             }
-            else if (err === "Particle count mismatch") {
+            else if (fluid_particles.positions.length !== particle_container.children.length) {
+                err = "Particle count mismatch : " + fluid_particles.positions.length + " != " + particle_container.children.length;
+            }
+            else if (err.startsWith("Particle count mismatch")) {
                 err = "";
             }
 
             particle_container.children.forEach((particle, index) => {
-                particle.x = payload.balls[index].position.x;
-                particle.y = payload.balls[index].position.y;
-                particle.tint = parseInt(payload.balls[index].color.replace("#", "0x"));
-                particle.scale.set(payload.balls[index].radius/64);
+                particle.x = fluid_particles.positions[index].x;
+                particle.y = fluid_particles.positions[index].y;
+                particle.tint = parseInt(fluid_particles.colors[index].replace("#", "0x"));
+                particle.scale.set(fluid_particles.radius/64);
             });
 
             step++;
@@ -129,7 +143,7 @@
         {#if !launched}
             <label>
                 Particle Count: {particle_number}
-                <input type="range" bind:value={particle_number} min="1" max="500" />
+                <input type="range" bind:value={particle_number} min="1" max="900" />
             </label>
             <button type="button" class="btn variant-filled" on:click={spawnParticles}>Spawn</button>
         {:else}

@@ -11,8 +11,8 @@
         bouncing_ball
     </a>
 
-    <a href="/main/apps/bouncing_ball2" aria-current={$page.url.pathname === '/main/apps/bouncing_ball2'}>
-        bouncing_ball2
+    <a href="/main/apps/fluid" aria-current={$page.url.pathname === '/main/apps/fluid'}>
+        fluid
     </a>
 </nav>
 

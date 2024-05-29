@@ -3,16 +3,17 @@ use std::sync::{Arc, Mutex};
 use colorgrad::Gradient;
 use serde::{Deserialize, Serialize};
 
-use crate::core::apps::bouncing_balls::main::BouncingBallSimulation;
 use crate::core::sciences::maths::vector2::Vector2;
+use crate::core::apps::bouncing_balls::main::BouncingBallSimulation;
+use crate::core::apps::fluid::main::Fluid;
 
 use super::renderer::Renderer;
 use super::template::SimulationTemplate;
 use super::frame_history::FrameHistory;
 
-#[derive(Serialize, Deserialize)]
 pub enum SimulationTemplateEnum {
-    BouncingBalls
+    BouncingBall(BouncingBallSimulation),
+    Fluid(Fluid)
 }
 
 /// The `Manager` struct represents a simulation manager.
@@ -150,25 +151,29 @@ pub async fn select_simulation_template(window: tauri::Window, simulation_manage
 
     let renderer = Renderer::new(Vector2::new(width, height), window);
 
-    let selected_template = match id {
+    let selected_template: Box<dyn SimulationTemplate> = match id {
         0 => {
             println!("Bouncing balls simulation1 selected");
             let gradient = match colorgrad::CustomGradient::new().html_colors(&["#0077ff", "#24ff6f", "ffff20", "ff3131"]).domain(&[0.0, 0.5, 0.7, 1.0]).build() {
                 Ok(gradient) => gradient,
                 Err(e) => return Err(e.to_string())
             };
-            BouncingBallSimulation::new(renderer.size, gradient, None, None, None, None)
+            Box::new(BouncingBallSimulation::new(renderer.size, gradient, None, None, None, None))
         },
         1 => {
-            println!("Bouncing balls simulation2 selected");
-            BouncingBallSimulation::new(renderer.size, colorgrad::turbo(), None, None, None, None)
+            println!("Fluid simulation selected");
+            let gradient = match colorgrad::CustomGradient::new().html_colors(&["#0077ff", "#24ff6f", "ffff20", "ff3131"]).domain(&[0.0, 0.5, 0.7, 1.0]).build() {
+                Ok(gradient) => gradient,
+                Err(e) => return Err(e.to_string())
+            };
+            Box::new(Fluid::new(gradient))
         },
         _ => return Err("Invalid simulation template ID".to_string())
     };
 
     match simulation_manager.lock() {
         Ok(mut simulation_manager) => {
-            simulation_manager.set_simulation_template(Box::new(selected_template));
+            simulation_manager.set_simulation_template(selected_template);
             simulation_manager.renderer = Some(renderer);
         },
         Err(e) => return Err(e.to_string())
