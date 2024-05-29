@@ -13,8 +13,8 @@ pub fn intersect_aabbs(a: AABB, b: AABB)->bool{
 
 
 pub fn collide(bodylist:&mut Vec<& mut RigidBody>,idx_a : usize, idx_b : usize)->(bool,Vector2D,f64){
-    let normal : Vector2D = vec_zero();
-    let depth :f64 =f64::MAX;
+    let mut normal : Vector2D = vec_zero();
+    let mut depth :f64 =f64::MAX;
     let shape_a:ShapeType = bodylist[idx_a].shape;
     let shape_b:ShapeType = bodylist[idx_b].shape;
 
@@ -45,7 +45,7 @@ pub fn collide(bodylist:&mut Vec<& mut RigidBody>,idx_a : usize, idx_b : usize)-
     }
     (false,normal,depth)
 }
-
+#[allow(dead_code)]
 pub fn intersect_polygon_circles2(center_c:Vector2D,c_rad:f64,polygon_center:Vector2D,vertices:&mut Vec<Vector2D>)->(bool,Vector2D,f64){
     let mut normal : Vector2D = vec_zero();
     let mut depth :f64 =f64::MAX;
@@ -88,7 +88,7 @@ pub fn intersect_polygon_circles2(center_c:Vector2D,c_rad:f64,polygon_center:Vec
 }
 
 //Only polygon v2
-
+#[allow(dead_code)]
 pub fn intersect_polygon2(center_a:Vector2D,vec_a: &mut Vec<Vector2D>,center_b:Vector2D,vec_b:&mut Vec<Vector2D>)->(bool,Vector2D,f64){
     let mut normal : Vector2D = vec_zero();
     let mut depth :f64 =f64::MAX;
@@ -180,12 +180,13 @@ pub fn intersect_polygon_circles(center_c:Vector2D,c_rad:f64,vertices:&mut Vec<V
     (true,normal,depth)
 }
 //Closest point
+#[allow(dead_code)]
 pub fn closest_point(center_c:Vector2D,vertices:& Vec<Vector2D >)->i32{
     let mut result = 1;
     let mut min_dist:f64 = f64::MAX;
     for i in 0..vertices.len() as i32{
-        let v = vertices[i as usize];
-        let dist = v.dist(center_c);
+        let mut v = vertices[i as usize];
+        let mut dist = v.dist(center_c);
         if dist<min_dist{
             min_dist=dist ;
             result = i ;
@@ -283,20 +284,18 @@ pub fn project_circle (center:Vector2D,rad:f64,axis:Vector2D)->(f64,f64){
     let point2 = mn(center,direction_and_radius);
     let mut min = point1.dot(axis);
     let mut max = point2.dot(axis);
-    if min > max {
-        let tp = min;
-        min = max; 
-        max = tp;
-    }
+    if (min>max){let tp = min;min = max; max = tp;}
+    (min,max)
 
-    (min, max)
+
+
 }
 
 pub fn intersect_circles(center_a:Vector2D,radia_a:f64,center_b:Vector2D,radia_b:f64)->(bool,Vector2D,f64){
     let mut normal = vec_zero();
-    let distance = center_a.dist(center_b);
-    let radii = radia_a+radia_b;
-    if distance >= radii {
+    let  distance = center_a.dist(center_b);
+    let  radii = radia_a+radia_b;
+    if(distance >= radii){
         return (false,normal,0.0);
     }
     normal = mn(center_b,center_a).normalize();
@@ -307,9 +306,9 @@ pub fn intersect_circles(center_a:Vector2D,radia_a:f64,center_b:Vector2D,radia_b
 #[allow(dead_code)]
 pub fn check_intersection_circles(bodies :&mut Vec<RigidBody>){
     for i in 0..bodies.len()-1{
-        let rigid_a=&mut bodies[i].clone();
+        let mut rigid_a=&mut bodies[i].clone();
         for j in i+1..bodies.len(){
-            let rigid_b=& mut bodies[j].clone();
+            let mut rigid_b=& mut bodies[j].clone();
             let (is_colliding, norm, depth) = intersect_circles(rigid_a.position, rigid_a.radius, rigid_b.position, rigid_b.radius);
             if is_colliding {
                 rigid_a.moves(dot_s(norm,depth /2.0));
@@ -353,22 +352,20 @@ pub fn find_contact_points(body_s:&mut Vec<& mut RigidBody>,idx_a:usize,idx_b:us
     }
     (c1,c2,cn)
 }
-
-pub fn find_contact_point_cb(center_c: Vector2D, rad_c:f64, center_b:Vector2D,vertices:&mut Vec<Vector2D>)->Vector2D{
+pub fn find_contact_point_cb(center_c: Vector2D, rad_c:f64,center_b:Vector2D,vertices:&mut Vec<Vector2D>)->Vector2D{
     let l = vertices.len();
-    //let mut cp = vec_zero(); semble être inutile
+    let mut cp = vec_zero();
     let mut min_dsq = f64::MAX;
     for i in 0..l{
-        let va = vertices[i];
-        let vb = vertices[(i+1)%l];
-        let  (dsq, c) = point_segment_distance(center_c,va,vb);
+        let  va = vertices[i];
+        let  vb = vertices[(i+1)%l];
+        let  (mut dsq, c) =point_segment_distance(center_c,va,vb);
         if dsq < min_dsq {
             min_dsq = dsq;
-            //cp = c
+            cp = c
         }
     }
-
-    vec_zero()
+    cp
 }
 
 pub fn point_segment_distance(p:Vector2D,a:Vector2D,b:Vector2D)->(f64,Vector2D){
@@ -391,7 +388,7 @@ pub fn point_segment_distance(p:Vector2D,a:Vector2D,b:Vector2D)->(f64,Vector2D){
 }
 
 pub fn find_contact_point_cc(center_a: Vector2D, rad_a:f64,center_b:Vector2D)->Vector2D{
-    let ab = mn(center_a,center_b);
+    let mut ab = mn(center_a,center_b);
     let  dir = ab.normalize();
     dot_s(sm(center_a,dir),rad_a)
 }
