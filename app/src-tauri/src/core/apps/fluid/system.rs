@@ -2,7 +2,7 @@ use crate::core::app_system::simulation::template::SimulationTemplate;
 use crate::core::app_system::simulation::renderer::DataToSend;
 use crate::core::sciences::maths::vector2::Vector2;
 
-use super::main::{Fluid, FluidParticles};
+use super::main::Fluid;
 use super::data::*;
 
 /// Obligatory implementation of the `SimulationTemplate` trait for the `BouncingBallSimulation` struct.

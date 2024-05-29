@@ -1,9 +1,4 @@
-use crate::r#struct::{ShapeType, Vector2D,WorkSpace,FlatTransform,RigidBody};
-use std::f64::consts::PI;
-use std::f64::consts;
-use std::ptr::{null, null_mut};
-use crate::r#struct::ShapeType::Circle;
-use crate::vectormath::{dot_s, sm, mn, div_s, vec_zero};
+use super::r#struct::FlatTransform;
 
 pub fn cos_me(i:f64)->f64{
     f64::cos(i)

@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use colorgrad::Gradient;
-use rayon::prelude::*;
+//use rayon::prelude::*;
 
 use crate::core::sciences::maths::Vector2;
 
@@ -72,7 +72,7 @@ pub struct Fluid {
 impl Fluid {
     pub fn new(velocity_gradient: Gradient) -> Self {
         //let particles = FluidParticles::new(0.0, 5.0, 0.5, 3.0, 30.0); # diffusion gazeuse
-        let particles = FluidParticles::new(0.0, 5.0, 0.5, 3.0, 30.0);
+        let particles = FluidParticles::new(0.0, 5.0, 0.75, 3.5, 30.0);
         //particles.push(Vector2::new(400.0, 300.0));
         let mut fluid = Fluid {
             // FLUID PROPERTIES
@@ -94,11 +94,13 @@ impl Fluid {
         self.particles.mass = self.mass / self.particles.len() as f32;
     }
 
+    #[allow(dead_code)]
     pub fn set_mass(&mut self, mass: f32) -> () {
         self.mass = mass;
         self.update_particles_mass();
     }
 
+    #[allow(dead_code)]
     pub fn get_mass(&self) -> f32 {
         self.mass
     }
@@ -194,8 +196,8 @@ impl Fluid {
     }
 
     pub fn update(&mut self, dt: f32) -> () {
-        //let dt = dt * 2.0;
-        let gravity = 200.0;
+        //let dt = dt * 1.5;
+        //let gravity = 200.0;
 
         // Apply gravity and update densities
         (0..self.particles.len()).for_each(|i| {

@@ -1,11 +1,4 @@
-use crate::r#struct::{ShapeType, Vector2D,WorkSpace,FlatTransform,ManiFold};
-use crate::r#struct::RigidBody;
-use std::f64::consts::PI;
-use crate::collisions::{check_intersection_circles, intersect_circles, intersect_polygon2, intersect_polygon_circles2, min};
-use crate::flatrgb::{clamp,clamp_for_int, initializer_r, which_shape};
-use crate::flattransfom::init_tf_zero;
-use crate::r#struct::ShapeType::Circle;
-use crate::vectormath::{dot_s, sm, mn, div_s, c_vect, vec_zero, transform_v};
+use super::r#struct::{Vector2D, ManiFold};
 
 pub fn init_manifold(body_1:usize, body_2:usize, norm: Vector2D,
                          depths: f64, contact_a: Vector2D, contact_b: Vector2D,

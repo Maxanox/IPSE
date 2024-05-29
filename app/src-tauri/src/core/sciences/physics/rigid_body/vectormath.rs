@@ -1,5 +1,5 @@
-use crate::r#struct::{RigidBody, Vector2D};
-use  crate::r#struct::FlatTransform;
+use super::r#struct::Vector2D;
+use  super::r#struct::FlatTransform;
 
 const VERY_SMALL_AMOUNT: f64 = 0.0005;
 pub fn c_vect(xx:f64,yy:f64)->Vector2D{
@@ -35,6 +35,7 @@ pub fn transform_v(v: Vector2D,tf:FlatTransform)->Vector2D{
     return Vector2D{x:tx,y:ty,}
 }
 
+#[allow(dead_code)]
 impl Vector2D {
 
     pub fn get_x (self : &Self) -> f64{

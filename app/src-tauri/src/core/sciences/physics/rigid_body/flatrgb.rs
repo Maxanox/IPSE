@@ -1,11 +1,11 @@
-use crate::r#struct::{ShapeType, Vector2D,WorkSpace,FlatTransform,AABB};
-use crate::r#struct::RigidBody;
-use  crate::physics::G;
-use crate::flataabb::{init_aabb,init_hard_aabb};
+use super::r#struct::{ShapeType, Vector2D,WorkSpace,FlatTransform,AABB};
+use super::r#struct::RigidBody;
+use  super::physics::G;
+use super::flataabb::init_hard_aabb;
 use std::f64::consts::PI;
-use crate::flattransfom::init_tf_zero;
-use crate::r#struct::ShapeType::Circle;
-use crate::vectormath::{dot_s, sm, mn, div_s, c_vect, vec_zero, transform_v};
+use super::flattransfom::init_tf_zero;
+use super::r#struct::ShapeType::Circle;
+use super::vectormath::{dot_s, sm, c_vect, vec_zero, transform_v};
 
 
 impl RigidBody{
@@ -19,6 +19,7 @@ impl RigidBody{
         self.tfv_required =true;
         self.aabb_update= true;
     }
+    #[allow(dead_code)]
     pub fn rotate_box(&mut self,amount:f64){
         self.angle +=amount;
         self.tfv_required=true;
@@ -49,6 +50,7 @@ impl RigidBody{
         self.tfv_required = true;
         self.aabb_update= true;
     }
+    #[allow(dead_code)]
     pub fn get_aabb(&mut self)->AABB{
         if self.aabb_update {
             let mut min_x = f64::MAX;
@@ -58,7 +60,7 @@ impl RigidBody{
             if which_shape(self.shape) == 1 {
                 let vertices = self.get_tfv();
                 for i in 0..vertices.len() {
-                    let mut v = vertices[i];
+                    let v = vertices[i];
                     if v.x < min_x { min_x = v.x; }
                     if v.x > max_x { max_x = v.x; }
                     if v.y < min_y { min_y = v.y; }
@@ -77,7 +79,7 @@ impl RigidBody{
     }
 }
 
-
+#[allow(dead_code)]
 pub fn creat_vertices_box(w:f64,h:f64)->Vec<Vector2D>{
     let left = w/2.0;
     let right = left + w;
@@ -98,6 +100,7 @@ pub fn which_shape(x : ShapeType)->u8{
     }
 }
 
+#[allow(dead_code)]
 pub fn initializer_r(pos :Vector2D,d:f64,mas:f64,rest:f64,
                    are:f64,b:bool,rad:f64,w:f64,h:f64,sh:ShapeType)->RigidBody{
     let mut r = RigidBody {
@@ -133,6 +136,7 @@ pub fn initializer_r(pos :Vector2D,d:f64,mas:f64,rest:f64,
     r.tfv_required = false;
     r
 }
+#[allow(dead_code)]
 pub fn clamp (v : f64, min : f64, max : f64) ->Result<f64,String>{
     if min==max { return Ok(min); }
     if min > max { return Err(format!("Minimum value ({}) cannot be greater than or equal to maximum value ({})", min, max)); }
@@ -159,12 +163,14 @@ pub fn triangulate_box()->Vec<i32>{
     triangles[5]=3;
     triangles
 }
+
+#[allow(dead_code)]
 pub fn create_circle_body(rad:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world:WorkSpace)->RigidBody{
     let j = create_circle_body_check(rad,pos,d,b,rest,world);
     j.unwrap()
 
 }
-
+#[allow(dead_code)]
 pub fn create_circle_body_check(rad:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world : WorkSpace)->Option<RigidBody>{
     let area_a = rad*rad*PI;
     if area_a < world.mn_bs  { return None; }
@@ -179,8 +185,9 @@ pub fn create_circle_body_check(rad:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world
     
 }
 
+#[allow(dead_code)]
 pub fn create_box_body(width:f64,height : f64,pos:Vector2D,d:f64,b:bool,rest:f64,world:WorkSpace)->RigidBody{
-    let j = crate::flatrgb::create_box_body_check(width,height, pos, d, b, rest, world);
+    let j = super::flatrgb::create_box_body_check(width,height, pos, d, b, rest, world);
     j.unwrap()
 
 }

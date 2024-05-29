@@ -4,8 +4,8 @@
 //use std::cmp::Ordering;
 
 use std::f64::consts::PI;
-use crate::flatrgb::{creat_vertices_box, triangulate_box, which_shape};
-use crate::vectormath::{c_vect, vec_zero};
+use super::flatrgb::triangulate_box;
+use super::vectormath::{c_vect, vec_zero};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vector2D {
@@ -20,6 +20,7 @@ pub struct AABB {
 }
 
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 pub struct Particle2D{
     position : Vector2D,
     velocity : Vector2D,
@@ -59,10 +60,11 @@ pub struct RigidBody{
 
 }
 
+#[allow(dead_code)]
 impl RigidBody {
 
     pub fn new_box()->RigidBody{
-        let mut r = RigidBody {
+        let r = RigidBody {
             position:vec_zero(),
             linear_velocity:Vector2D{x:0.0,y:0.0,},
             angle:0.0,
@@ -90,7 +92,7 @@ impl RigidBody {
     }
 
     pub fn new_ball()->RigidBody{
-        let mut r = RigidBody {
+        let r = RigidBody {
             position:vec_zero(),
             linear_velocity:Vector2D{x:0.0,y:0.0,},
             angle:0.0,
@@ -299,6 +301,7 @@ pub struct FlatTransform{
     pub cos:f64,
 }
 
+#[allow(dead_code)]
 impl FlatTransform {
     pub fn get_pos_x(&self) -> f64 {
         self.pos_x
@@ -348,6 +351,7 @@ pub struct WorkSpace<'a>{
     pub contact_list : Vec<ManiFold>
 }
 
+#[allow(dead_code)]
 impl <'a> WorkSpace<'a> {
     pub fn get_mn_bs(&self) -> f64 {
         self.mn_bs
@@ -459,6 +463,7 @@ pub struct ManiFold {
     pub contact_count: i32,
 }
 
+#[allow(dead_code)]
 impl ManiFold {
 
     pub fn get_body_a(&self) -> usize {
