@@ -101,10 +101,10 @@ pub fn which_shape(x : ShapeType)->u8{
 }
 
 #[allow(dead_code)]
-pub fn initializer_r(pos :Vector2D,d:f64,mas:f64,rest:f64,
-                   are:f64,b:bool,rad:f64,w:f64,h:f64,sh:ShapeType)->RigidBody{
+pub fn initializer_r(d:f64,mas:f64,rest:f64,
+                     are:f64,b:bool,rad:f64,w:f64,h:f64,sh:ShapeType,inertie:f64)->RigidBody{
     let mut r = RigidBody {
-        position:pos,
+        position:vec_zero(),
         linear_velocity:Vector2D{x:0.0,y:0.0,},
         angle:0.0,
         angular_velocity:0.0,
@@ -126,8 +126,13 @@ pub fn initializer_r(pos :Vector2D,d:f64,mas:f64,rest:f64,
         tfv_required:false,
         aabb_update:true,
         index : -1,
+        inertia : inertie,
+        inv_inertia:0.0,
     };
-    if r.is_static { r.inv_mass= 1.0/r.mass; }
+    if r.is_static {
+        r.inv_mass= 1.0/r.mass;
+        r.inv_inertia=1.0/r.inertia;
+    }
     if which_shape(sh)==1 {
         r.vertices = creat_vertices_box(r.width,r.height);
         r.triangles =triangulate_box();
@@ -165,13 +170,13 @@ pub fn triangulate_box()->Vec<i32>{
 }
 
 #[allow(dead_code)]
-pub fn create_circle_body(rad:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world:WorkSpace)->RigidBody{
-    let j = create_circle_body_check(rad,pos,d,b,rest,world);
+pub fn create_circle_body(rad:f64,d:f64,b:bool,rest:f64,world:WorkSpace)->RigidBody{
+    let j = create_circle_body_check(rad,d,b,rest,world);
     j.unwrap()
 
 }
 #[allow(dead_code)]
-pub fn create_circle_body_check(rad:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world : WorkSpace)->Option<RigidBody>{
+pub fn create_circle_body_check(rad:f64,d:f64,b:bool,rest:f64,world : WorkSpace)->Option<RigidBody>{
     let area_a = rad*rad*PI;
     if area_a < world.mn_bs  { return None; }
     if area_a > world.mx_bs {return  None;}
@@ -179,20 +184,25 @@ pub fn create_circle_body_check(rad:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world
     if d > world.mx_d {return None;}
     let restit = clamp(rest,0.0,1.0).unwrap();
 //mass = area*depth*density
-    let mass = area_a*1.0*d;
-    let body = initializer_r(pos,d,mass,restit,area_a,b,rad,0.0,0.0,Circle);
+    let mut mass = 0.0;
+    let mut inertia = 0.0;
+    if !b {
+        mass = area_a*1.0*d;
+        inertia = (1.0/2.0)*mass*rad*rad;
+    }
+    let body = initializer_r(d,mass,restit,area_a,b,rad,0.0,0.0,Circle,inertia);
     Some(body)
-    
+
 }
 
 #[allow(dead_code)]
-pub fn create_box_body(width:f64,height : f64,pos:Vector2D,d:f64,b:bool,rest:f64,world:WorkSpace)->RigidBody{
-    let j = super::flatrgb::create_box_body_check(width,height, pos, d, b, rest, world);
+pub fn create_box_body(width:f64,height : f64,d:f64,b:bool,rest:f64,world:WorkSpace)->RigidBody{
+    let j = super::flatrgb::create_box_body_check(width,height, d, b, rest, world);
     j.unwrap()
 
 }
 
-pub fn create_box_body_check(width:f64,height:f64,pos:Vector2D,d:f64,b:bool,rest:f64,world : WorkSpace)->Option<RigidBody>{
+pub fn create_box_body_check(width:f64,height:f64,d:f64,b:bool,rest:f64,world : WorkSpace)->Option<RigidBody>{
     let area_a = width*height;
     if area_a < world.mn_bs  { return None; }
     if area_a > world.mx_bs {return  None;}
@@ -200,8 +210,13 @@ pub fn create_box_body_check(width:f64,height:f64,pos:Vector2D,d:f64,b:bool,rest
     if d > world.mx_d {return None;}
     let restit = clamp(rest,0.0,1.0).unwrap();
 //mass = area*depth*density
-    let mass = area_a*d;
-    let body = initializer_r(pos,d,mass,restit,area_a,b,0.0,width,height,ShapeType::Box);
+    let mut mass = 0.0;
+    let mut inertia = 0.0;
+    if !b {
+        mass = area_a*d;
+        inertia = (1.0/12.0)*mass*(width*width+height*height);
+    }
+    let body = initializer_r(d,mass,restit,area_a,b,0.0,width,height,ShapeType::Box,inertia);
     Some(body)
 
 }

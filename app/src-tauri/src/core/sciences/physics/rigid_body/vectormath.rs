@@ -80,7 +80,7 @@ impl Vector2D {
 
 
     pub fn nearly_equal(&self,b:Vector2D)->bool{
-        nearly_eq(self.x,b.x) && nearly_eq(self.y,b.y)
+        self.dist_sq(b) < VERY_SMALL_AMOUNT*VERY_SMALL_AMOUNT
     }
 
     pub fn dot(&self, v: Vector2D) -> f64 {
