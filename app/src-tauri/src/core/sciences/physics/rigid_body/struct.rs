@@ -3,37 +3,37 @@
 //use std::f64::consts::PI;
 //use std::cmp::Ordering;
 
-use serde::{Deserialize};
+use serde::{Serialize,Deserialize};
 use std::f64::consts::PI;
 use super::flatrgb::{triangulate_box, which_shape};
 use super::vectormath::{c_vect, vec_zero};
 
-#[derive(Deserialize,  Debug, Clone, Copy)]
+#[derive(Serialize,Deserialize,  Debug, Clone, Copy)]
 pub struct Vector2D {
     pub x : f64,
     pub y : f64,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Serialize,Deserialize, Debug, Clone, Copy)]
 pub struct AABB {
     pub min: Vector2D,
     pub max: Vector2D,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Serialize,Deserialize, Debug, Clone, Copy)]
 pub struct Particle2D{
     position : Vector2D,
     velocity : Vector2D,
     mass : f64,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Serialize,Deserialize, Debug, Clone, Copy)]
 pub enum  ShapeType{
     Circle = 0,
     Box = 1
 }
 
-#[derive(Debug,Clone)]
+#[derive(Serialize,Deserialize, Debug,Clone)]
 pub struct RigidBody{
     pub position : Vector2D,
     pub linear_velocity : Vector2D,
@@ -235,7 +235,7 @@ impl RigidBody {
     pub fn get_inv_inertia(&self) -> f64 { self.inv_inertia.clone() }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Serialize,Deserialize, Debug, Clone, Copy)]
 pub struct FlatTransform{
     pub pos_x:f64,
     pub pos_y:f64,
@@ -262,7 +262,7 @@ impl FlatTransform {
 }
 
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WorkSpace{
     pub mn_bs : f64,
     pub mx_bs : f64,
@@ -332,7 +332,7 @@ impl  WorkSpace {
     }
 }
 
-#[derive(Debug,Clone)]
+#[derive(Serialize,Deserialize,Debug,Clone)]
 pub struct ManiFold {
     pub body_a: usize,
     pub body_b: usize,
