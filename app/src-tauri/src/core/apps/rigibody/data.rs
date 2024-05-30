@@ -11,5 +11,4 @@ pub struct RendererData {
 impl DataToSend for RendererData {}
 
 #[derive(Deserialize, Clone)]
-pub struct StarterData {
-}
+pub struct StarterData {}

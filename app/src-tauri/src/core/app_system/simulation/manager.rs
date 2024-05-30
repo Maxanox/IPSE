@@ -4,6 +4,7 @@ use std::sync::{Arc, Mutex};
 use crate::core::sciences::maths::vector2::Vector2;
 use crate::core::apps::bouncing_balls::main::BouncingBallSimulation;
 use crate::core::apps::fluid::main::Fluid;
+use crate::core::apps::rigibody::main::RigidSimulation;
 
 use super::renderer::Renderer;
 use super::template::SimulationTemplate;
@@ -166,6 +167,11 @@ pub async fn select_simulation_template(window: tauri::Window, simulation_manage
             };
             Box::new(Fluid::new(gradient))
         },
+        2 => {
+            println!("Rigid body simulation selected");
+            Box::new(RigidSimulation::new(renderer.size, None))
+        },
+
         _ => return Err("Invalid simulation template ID".to_string())
     };
 
@@ -217,8 +223,9 @@ pub async fn run_simulation(simulation_manager: tauri::State<'_, Arc<Mutex<Simul
                 },
                 Err(e) => return Err(e.to_string())
             };
-
-            std::thread::sleep(std::time::Duration::from_millis(1000/60));
+            
+            // seams to be needed to avoid the thread to be too fast
+            std::thread::sleep(std::time::Duration::from_millis(1000/120));
         }
 
         Ok(())

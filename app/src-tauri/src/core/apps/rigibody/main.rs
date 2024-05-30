@@ -4,6 +4,8 @@ use crate::core::sciences::physics::rigid_body::r#struct::{RigidBody, ShapeType,
 use crate::core::sciences::physics::rigid_body::vectormath::c_vect;
 //use super::data::*;
 
+use crate::core::sciences::maths::vector2::Vector2;
+
 
 /// Represents a bouncing ball simulation.
 ///
@@ -29,10 +31,10 @@ impl RigidSimulation {
     /// # Returns
     ///
     /// A new `RigidSimulation` instance.
-    pub fn new(renderer_size: Vector2D, default_workspace:Option<WorkSpace> ) -> Self {
+    pub fn new(renderer_size: Vector2, default_workspace:Option<WorkSpace> ) -> Self {
         let workspace = if let Some(workspace) = default_workspace{workspace} else {WorkSpace::new()};
         RigidSimulation{
-            renderer_size,
+            renderer_size: Vector2D { x: renderer_size.x as f64, y: renderer_size.y as f64 },
             work_space:workspace,
         }
     }

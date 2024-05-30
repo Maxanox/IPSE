@@ -14,6 +14,10 @@
     <a href="/main/apps/fluid" aria-current={$page.url.pathname === '/main/apps/fluid'}>
         fluid
     </a>
+
+    <a href="/main/apps/rigidbody" aria-current={$page.url.pathname === '/main/apps/rigidbody'}>
+        rigidbody
+    </a>
 </nav>
 
 {#if $navigating}
