@@ -2,7 +2,6 @@
     import { listen, type UnlistenFn } from '@tauri-apps/api/event';
     import { invoke } from '@tauri-apps/api/tauri';
     import { onDestroy, onMount } from 'svelte';
-    import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
     
     import type { Vector2 } from '$lib/components/app/Interfaces/vector2.ts';
     import App from '$lib/components/app/App/App.svelte';
@@ -12,7 +11,7 @@
 
     import { Container } from 'svelte-pixi';
     
-    import type { FluidStarterData, RendererData } from './lib/interfaces';
+    import type { RendererData } from './lib/interfaces';
 
     let renderer_width: number = 1000;
     let renderer_height: number = 600;
@@ -24,11 +23,9 @@
     async function startSimulation() {
         launched = true;
 
-        let starter_data: FluidStarterData = { positions: [] };
-
         let renderer_size: Vector2 = { x: renderer_width, y: renderer_height };
 
-        await invoke('initialize_simulation', { rendererSize: renderer_size, serializedData: JSON.stringify(starter_data)}).catch((error) => err = error);
+        await invoke('initialize_simulation', { rendererSize: renderer_size, serializedData: null});
 
         await invoke('run_simulation');
     }
