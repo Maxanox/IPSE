@@ -1,9 +1,22 @@
 use serde::Serialize;
 
 use colorgrad::Gradient;
+use serde_json::map::Iter;
 //use rayon::prelude::*;
 
 use crate::core::sciences::maths::Vector2;
+
+const CELL_OFFSETS: [Vector2; 9] = [
+    Vector2 { x: -1.0, y: -1.0 },
+    Vector2 { x: 0.0, y: -1.0 },
+    Vector2 { x: 1.0, y: -1.0 },
+    Vector2 { x: -1.0, y: 0.0 },
+    Vector2 { x: 0.0, y: 0.0 },
+    Vector2 { x: 1.0, y: 0.0 },
+    Vector2 { x: -1.0, y: 1.0 },
+    Vector2 { x: 0.0, y: 1.0 },
+    Vector2 { x: 1.0, y: 1.0 }
+];
 
 #[derive(Serialize, PartialEq, Clone, Debug)]
 pub struct FluidParticles {
@@ -19,6 +32,8 @@ pub struct FluidParticles {
     pub velocities: Vec<Vector2>,
     pub densities: Vec<f32>,
     pub colors: Vec<String>, // store in hex string format and not in colorgrad::Color to allow serialization
+    pub spatial_lookup: Vec<(usize, usize)>,
+    pub lookup_start: Vec<usize>,
 }
 
 impl FluidParticles {
@@ -35,7 +50,9 @@ impl FluidParticles {
             predicted_positions: Vec::new(),
             velocities: Vec::new(),
             densities: Vec::new(),
-            colors: Vec::new()
+            colors: Vec::new(),
+            spatial_lookup: Vec::new(),
+            lookup_start: Vec::new(),
         }
     }
 
@@ -55,6 +72,67 @@ impl FluidParticles {
         self.velocities.push(Vector2::zero());
         self.densities.push(0.0);
         self.colors.push("#FFFFFFFF".to_string());
+        self.spatial_lookup.push((0, 0));
+        self.lookup_start.push(0);
+    }
+
+    pub fn get_cell_position(&self, position: &Vector2) -> Vector2 {
+        let x = (position.x / self.smoothing_radius).floor();
+        let y = (position.y / self.smoothing_radius).floor();
+        Vector2::new(x, y)
+    }
+
+    pub fn get_cell_key(&self, cell_position: &Vector2) -> usize {
+        const HK1: usize = 15823;
+        const HK2: usize = 9737333;
+        let hash = cell_position.x as usize * HK1 + cell_position.y as usize * HK2;
+        hash % self.spatial_lookup.len()
+    }
+
+    pub fn update_spatial_lookup(&mut self) {
+        for (i, position) in self.positions.iter().enumerate() {
+            // get_cell_position
+            let cell_position = self.get_cell_position(position);
+            
+            // get_cell_key
+            let cell_key = self.get_cell_key(&cell_position);
+
+            self.spatial_lookup[i] = (i, cell_key);
+            self.lookup_start[cell_key] = usize::MAX;
+        }
+
+        self.spatial_lookup.sort_unstable_by_key(|(_, key)| *key);
+
+        for (i, (_, key)) in self.spatial_lookup.iter().enumerate() {
+            let prev_key = if i == 0 { usize::MAX } else { self.spatial_lookup[i - 1].1 };
+            if *key != prev_key {
+                self.lookup_start[*key] = i;
+            }
+        }
+    }
+
+    pub fn for_each_particle_whitin_radius(&self, position: &Vector2) ->  () {
+        let cell_position = self.get_cell_position(position);
+        let sqr_radius = self.smoothing_radius * self.smoothing_radius;
+
+        for offset in CELL_OFFSETS.iter() {
+            let neighbor_position = cell_position + *offset;
+            let neighbor_key = self.get_cell_key(&neighbor_position);
+
+            let start_index = self.lookup_start[neighbor_key];
+
+            for (i, key) in self.spatial_lookup.iter().skip(start_index) {
+                if *key != neighbor_key {
+                    break;
+                }
+
+                let sqr_distance = self.positions[*i].distance_to_squared(*position);
+
+                if sqr_distance < sqr_radius {
+                    // do something
+                }
+            }
+        }
     }
 }
 
@@ -64,7 +142,6 @@ pub struct Fluid {
     pub gravity: f32,
     pub visual_filter: u8,
     pub collision_restitution: f32,
-    mass: f32,
     // BOUNDARY PROPERTIES
     pub box_bound_x: f32,
     pub box_bound_y: f32,
@@ -75,39 +152,19 @@ pub struct Fluid {
 impl Fluid {
     pub fn new(velocity_gradient: Gradient) -> Self {
         //let particles = FluidParticles::new(0.0, 5.0, 0.5, 3.0, 30.0); # diffusion gazeuse
-        let particles = FluidParticles::new(0.0, 5.0, 0.75, 3.5, 30.0);
-        let mut fluid = Fluid {
+        let particles = FluidParticles::new(1.0, 5.0, 0.75, 3.5, 30.0);
+        Fluid {
             // FLUID PROPERTIES
             particles,
             gravity: 0.0,
             visual_filter: 0,
             collision_restitution: 0.95,
-            mass: 50.0,
             // BOUNDARY PROPERTIES
             box_bound_x: 800.0,
             box_bound_y: 600.0,
             // OTHER PROPERTIES
             velocity_gradient
-        };
-
-        fluid.update_particles_mass();
-
-        fluid
-    }
-
-    pub fn update_particles_mass(&mut self) -> () {
-        self.particles.mass = self.mass / self.particles.len() as f32;
-    }
-
-    #[allow(dead_code)]
-    pub fn set_mass(&mut self, mass: f32) -> () {
-        self.mass = mass;
-        self.update_particles_mass();
-    }
-
-    #[allow(dead_code)]
-    pub fn get_mass(&self) -> f32 {
-        self.mass
+        }
     }
 
     fn smoothing_kernel(&self, distance: f32) -> f32 {

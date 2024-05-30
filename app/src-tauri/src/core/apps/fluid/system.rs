@@ -23,8 +23,6 @@ impl SimulationTemplate for Fluid {
             self.particles.push(position);
         }
 
-        self.update_particles_mass();
-
         Ok(())
     }
 
@@ -55,7 +53,6 @@ impl SimulationTemplate for Fluid {
                         self.collision_restitution = settings.collision_restitution;
                         self.gravity = settings.gravity;
                         self.particles.target_density = settings.target_density;
-                        self.set_mass(settings.mass);
                         self.particles.pressure_multiplier = settings.pressure_stiffness;
                         self.visual_filter = settings.visual_filter;
                         self.particles.smoothing_radius = settings.smoothing_radius;

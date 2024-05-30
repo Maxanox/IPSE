@@ -147,14 +147,6 @@
     <!-- default slot -->
     <div class="flex flex-row">
         <div class="card p-4 flex flex-col gap-5">
-            <label class="label">
-                <input type="number" class="badge variant-filled mr-1" 
-                    bind:value={event_settings.mass} min={0} max={100}
-                />
-                <span>Mass</span>
-                <input type="range" bind:value={event_settings.mass} min={0} max={100}/>
-            </label>
-
             <label>
                 <input type="number" class="badge variant-filled mr-1" 
                     bind:value={event_settings.gravity} min={0} max={100}
