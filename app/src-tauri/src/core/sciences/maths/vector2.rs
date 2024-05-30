@@ -103,9 +103,19 @@ impl Vector2 {
     (v1 - v2).magnitude()
   }
 
+  /// Retourne la distance entre deux vecteurs au carré
+  pub fn distance_squared(v1: Vector2, v2: Vector2) -> f32 {
+    (v1 - v2).magnitude_squared()
+  }
+
   /// Retourne la distance entre le vecteur et un autre vecteur
   pub fn distance_to(&self, other: Vector2) -> f32 {
     (*self - other).magnitude()
+  }
+
+  /// Retourne la distance entre le vecteur et un autre vecteur au carré
+  pub fn distance_to_squared(&self, other: Vector2) -> f32 {
+    (*self - other).magnitude_squared()
   }
 
   /// Retourne le vecteur opposé
@@ -119,6 +129,11 @@ impl Vector2 {
   /// Retourne la norme du vecteur
   pub fn magnitude(&self) -> f32 {
     (self.x * self.x + self.y * self.y).sqrt()
+  }
+
+  /// Retourne la norme du vecteur au carré
+  pub fn magnitude_squared(&self) -> f32 {
+    self.x * self.x + self.y * self.y
   }
 
   /// Retourne le vecteur normalisé.
