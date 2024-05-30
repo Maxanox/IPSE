@@ -149,15 +149,15 @@
         <div class="card p-4 flex flex-col gap-5">
             <label>
                 <input type="number" class="badge variant-filled mr-1" 
-                    bind:value={event_settings.gravity} min={0} max={100}
+                    bind:value={event_settings.gravity} min={0} max={100} step={0.5}
                 />
                 <span>Gravity</span>
-                <input type="range" bind:value={event_settings.gravity} min={0} max={100} />
+                <input type="range" bind:value={event_settings.gravity} min={0} max={100} step={0.01}/>
             </label>
 
             <label>
                 <input type="number" class="badge variant-filled mr-1" 
-                    bind:value={event_settings.collision_restitution} min={0} max={1} step={0.01}
+                    bind:value={event_settings.collision_restitution} min={0} max={1} step={0.5}
                 />
                 <span>Collision restitution</span>
                 <input type="range" bind:value={event_settings.collision_restitution} min={0} max={1} step={0.01}/>
@@ -165,26 +165,26 @@
 
             <label>
                 <input type="number" class="badge variant-filled mr-1" 
-                    bind:value={event_settings.pressure_stiffness} min={0} max={10}
+                    bind:value={event_settings.pressure_stiffness} min={0} max={100} step={0.5}
                 />
                 <span>Pressure Multiplier</span>
-                <input type="range" bind:value={event_settings.pressure_stiffness} min={0} max={10}/>
+                <input type="range" bind:value={event_settings.pressure_stiffness} min={0} max={100} step={0.1}/>
             </label>
 
             <label>
                 <input type="number" class="badge variant-filled mr-1" 
-                    bind:value={event_settings.target_density} min={0} max={10} step={0.25}
+                    bind:value={event_settings.target_density} min={0} max={100} step={0.5}
                 />
                 <span>Target Density</span>
-                <input type="range" bind:value={event_settings.target_density} min={0} max={10} step={0.25}/>
+                <input type="range" bind:value={event_settings.target_density} min={0} max={100} step={0.1}/>
             </label>
 
             <label>
                 <input type="number" class="badge variant-filled mr-1" 
-                    bind:value={event_settings.smoothing_radius} min={1} max={100}
+                    bind:value={event_settings.smoothing_radius} min={1} max={100} step={0.5}
                 />
                 <span>Smoothing Radius</span>
-                <input type="range" bind:value={event_settings.smoothing_radius} min={1} max={100}/>
+                <input type="range" bind:value={event_settings.smoothing_radius} min={1} max={100} step={0.1}/>
             </label>
 
             <label class="label">
@@ -214,7 +214,7 @@
             {#if !launched}
                 <label>
                     Particle Count: {particle_number}
-                    <input type="range" bind:value={particle_number} min="1" max="900" />
+                    <input type="range" bind:value={particle_number} min="1" max="4000" />
                 </label>
                 <button type="button" class="btn variant-filled" on:click={spawnParticles}>Spawn</button>
             {:else}

@@ -82,10 +82,13 @@ impl FluidParticles {
         Vector2::new(x, y)
     }
 
-    pub fn get_cell_key(&self, cell_position: &Vector2) -> usize {
+    pub fn get_cell_hash(&self, cell_position: &Vector2) -> usize {
         const HK1: usize = 15823;
         const HK2: usize = 9737333;
-        let hash = cell_position.x as usize * HK1 + cell_position.y as usize * HK2;
+        cell_position.x as usize * HK1 + cell_position.y as usize * HK2
+    }
+
+    pub fn get_cell_key_from_hash(&self, hash: usize) -> usize {
         hash % self.spatial_lookup.len()
     }
 
@@ -93,9 +96,12 @@ impl FluidParticles {
         for (i, position) in self.positions.iter().enumerate() {
             // get_cell_position
             let cell_position = self.get_cell_position(position);
+
+            // get_cell_hash
+            let cell_hash = self.get_cell_hash(&cell_position);
             
-            // get_cell_key
-            let cell_key = self.get_cell_key(&cell_position);
+            // get_cell_key_from_hash
+            let cell_key = self.get_cell_key_from_hash(cell_hash);
 
             self.spatial_lookup[i] = (i, cell_key);
             self.lookup_start[cell_key] = usize::MAX;
@@ -107,30 +113,6 @@ impl FluidParticles {
             let prev_key = if i == 0 { usize::MAX } else { self.spatial_lookup[i - 1].1 };
             if *key != prev_key {
                 self.lookup_start[*key] = i;
-            }
-        }
-    }
-
-    pub fn for_each_particle_whitin_radius(&self, position: &Vector2) ->  () {
-        let cell_position = self.get_cell_position(position);
-        let sqr_radius = self.smoothing_radius * self.smoothing_radius;
-
-        for offset in CELL_OFFSETS.iter() {
-            let neighbor_position = cell_position + *offset;
-            let neighbor_key = self.get_cell_key(&neighbor_position);
-
-            let start_index = self.lookup_start[neighbor_key];
-
-            for (i, key) in self.spatial_lookup.iter().skip(start_index) {
-                if *key != neighbor_key {
-                    break;
-                }
-
-                let sqr_distance = self.positions[*i].distance_to_squared(*position);
-
-                if sqr_distance < sqr_radius {
-                    // do something
-                }
             }
         }
     }
@@ -179,13 +161,37 @@ impl Fluid {
     }
 
     fn calculate_density(&self, i: usize) -> f32 {
-        let mut density = 0.0;
-        
-        // loop over all particles
-        for other_position in self.particles.predicted_positions.iter() {
-            let distance = self.particles.predicted_positions[i].distance_to(*other_position);
-            let influence = self.smoothing_kernel(distance);
-            density += self.particles.mass * influence;
+        let mut density = self.smoothing_kernel(0.0); // au moins la densité de la particule i
+
+        // Optimized version
+        let cell_position = self.particles.get_cell_position(&self.particles.predicted_positions[i]);
+        let sqr_radius = self.particles.smoothing_radius * self.particles.smoothing_radius;
+
+        for offset in CELL_OFFSETS.iter() {
+            let neighbor_position = cell_position + *offset;
+            let neighbor_hash = self.particles.get_cell_hash(&neighbor_position);
+            let neighbor_key = self.particles.get_cell_key_from_hash(neighbor_hash);
+
+            let start_index = self.particles.lookup_start[neighbor_key];
+
+            for (other_i, key) in self.particles.spatial_lookup.iter().skip(start_index) {
+                if *key != neighbor_key {
+                    break;
+                }
+
+                if i == *other_i { // skip self
+                    continue;
+                }                
+
+                let sqr_distance = self.particles.predicted_positions[i].distance_to_squared(self.particles.predicted_positions[*other_i]);
+
+                if sqr_distance < sqr_radius {
+                    // calculate density
+                    let distance = self.particles.predicted_positions[i].distance_to(self.particles.predicted_positions[*other_i]);
+                    let influence = self.smoothing_kernel(distance);
+                    density += self.particles.mass * influence;
+                }
+            }
         }
 
         density
@@ -213,19 +219,40 @@ impl Fluid {
     pub fn calculate_pressure_force(&self, i: usize) -> Vector2 {
         let mut pressure_force = Vector2::zero();
 
-        for other_i in 0..self.particles.len() {
-            if i == other_i {
-                continue;
+        // Optimized version
+        let cell_position = self.particles.get_cell_position(&self.particles.predicted_positions[i]);
+        let sqr_radius = self.particles.smoothing_radius * self.particles.smoothing_radius;
+
+        for offset in CELL_OFFSETS.iter() {
+            let neighbor_position = cell_position + *offset;
+            let neighbor_hash = self.particles.get_cell_hash(&neighbor_position);
+            let neighbor_key = self.particles.get_cell_key_from_hash(neighbor_hash);
+
+            let start_index = self.particles.lookup_start[neighbor_key];
+
+            for (other_i, key) in self.particles.spatial_lookup.iter().skip(start_index) {
+                if *key != neighbor_key {
+                    break;
+                }                
+
+                let sqr_distance = self.particles.predicted_positions[i].distance_to_squared(self.particles.predicted_positions[*other_i]);
+
+                if sqr_distance < sqr_radius {
+                    // calculate pressure force
+                    if i == *other_i {
+                        continue;
+                    }
+        
+                    let offset = self.particles.predicted_positions[i] - self.particles.predicted_positions[*other_i];
+                    let distance = offset.magnitude();
+                    let direction = if distance == 0.0 { Vector2::random() } else { offset / distance };
+                    let slope = self.smoothing_kernel_derivative(distance);
+                    let density = self.particles.densities[*other_i];
+                    let shared_pressure = self.calculate_shared_pressure(i, *other_i);
+        
+                    pressure_force += direction * shared_pressure * slope * self.particles.mass / density;
+                }
             }
-
-            let offset = self.particles.predicted_positions[i] - self.particles.predicted_positions[other_i];
-            let distance = offset.magnitude();
-            let direction = if distance == 0.0 { Vector2::random() } else { offset / distance };
-            let slope = self.smoothing_kernel_derivative(distance);
-            let density = self.particles.densities[other_i];
-            let shared_pressure = self.calculate_shared_pressure(i, other_i);
-
-            pressure_force += direction * shared_pressure * slope * self.particles.mass / density;
         }
 
         pressure_force
@@ -265,6 +292,9 @@ impl Fluid {
             self.particles.velocities[i] += Vector2::down() * self.gravity * dt;
             self.particles.predicted_positions[i] = self.particles.positions[i] + self.particles.velocities[i] * dt;
         });
+
+        // Update spatial lookup
+        self.particles.update_spatial_lookup();
 
         if self.visual_filter == 3 {
             // Calculate densities
