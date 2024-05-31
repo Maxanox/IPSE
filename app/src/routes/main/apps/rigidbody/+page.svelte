@@ -12,9 +12,21 @@
     import { Container } from 'svelte-pixi';
     
     import type { RendererData } from './lib/interfaces';
+    import HBarQuickData from '$lib/components/app/UI/boxes/HBarQuickData.svelte';
+
+
+    let duration_callback: NodeJS.Timeout;
 
     let renderer_width: number = 1000;
     let renderer_height: number = 600;
+
+    let step = 0;
+    let fps = 120;
+    let duration = 0;
+
+    let speed_coef = 1;
+    let err = "";
+    
 
     let launched = false;
 
@@ -44,6 +56,17 @@
 </script>
 
 <App slotPageHeader="flex" regionPage="p-5 gap-5">
+    <svelte:fragment slot="pageHeader">
+        <HBarQuickData
+            data={[
+                { name: 'Step', value: step }, 
+                { name: 'FPS', value: fps.toFixed(2) }, 
+                { name: 'Duration', value: duration.toFixed(2) },
+            
+            ]} 
+            light_switch={true}>
+        </HBarQuickData>
+    </svelte:fragment>
     <!-- default slot -->
     <div class="flex flex-col items-center justify-center gap-5 m-auto">
         <Renderer bind:width={renderer_width} bind:height={renderer_height} controls={launched}>
@@ -55,4 +78,4 @@
         {/if}
     </div>
     <!-- /default slot -->
-</App>
+</App> 
