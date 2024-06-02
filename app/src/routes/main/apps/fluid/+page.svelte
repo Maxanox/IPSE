@@ -2,6 +2,7 @@
     import { listen, type UnlistenFn } from '@tauri-apps/api/event';
     import { invoke } from '@tauri-apps/api/tauri';
     import { onDestroy, onMount } from 'svelte';
+    import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton'
     
     import type { Vector2 } from '$lib/components/app/Interfaces/vector2.ts';
     import App from '$lib/components/app/App/App.svelte';
@@ -44,7 +45,8 @@
         pressure_stiffness: 100,
         visual_filter: 0,
         smoothing_radius: 30,
-        viscosity_strength: 1
+        viscosity_strength: 1,
+        interactive_force_mode: true,
     };
 
     $ : {
@@ -279,6 +281,11 @@
                 </select>
             </label>
 
+            <RadioGroup>
+                <RadioItem bind:group={event_settings.interactive_force_mode} name="Pull" value={true}><i class="fa-solid fa-minimize"></i></RadioItem>
+                <RadioItem bind:group={event_settings.interactive_force_mode} name="Push" value={false}><i class="fa-solid fa-maximize"></i></RadioItem>
+            </RadioGroup>
+
             {#if !launched}
                 <div class="flex flex-col justify-center items-center my-auto gap-2">
                     <label class="flex flex-col w-2/3">
@@ -316,8 +323,9 @@
             on:pointerdown={(event) => {
                 mouse_position = { x: Math.round(event.offsetX), y: Math.round(event.offsetY) }; 
                 drag = true
+                interactive_force_position_update();
             }}
-            on:pointerup={() => drag = false}
+            on:pointerup={(event) => drag = false}
             on:pointerleave={() => drag = false}
             on:pointermove={(event) => {
                 if (drag) {
@@ -337,7 +345,7 @@
                             y={mouse_position.y}
                             draw={(g) => {
                                 g.lineStyle(1, 0x00AA00);
-                                g.drawCircle(0, 0, 50);
+                                g.drawCircle(0, 0, 100);
                             }}
                         />
                         <div transition:fade class="absolute z-10 top-2 left-2 text-white bg-black bg-opacity-20 p-2 rounded-lg">

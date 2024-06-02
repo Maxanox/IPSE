@@ -57,4 +57,5 @@ export interface EventSettings {
     visual_filter: number,
     smoothing_radius: number,
     viscosity_strength: number,
+    interactive_force_mode: boolean
 }

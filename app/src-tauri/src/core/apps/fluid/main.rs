@@ -128,6 +128,7 @@ pub struct Fluid {
     pub viscosity_strength: f32,
     pub interactive_force: bool,
     pub interactive_force_position: Vector2,
+    pub interactive_force_mode: bool,
     // BOUNDARY PROPERTIES
     pub box_bound_x: f32,
     pub box_bound_y: f32,
@@ -149,6 +150,7 @@ impl Fluid {
             viscosity_strength: 0.1,
             interactive_force: false,
             interactive_force_position: Vector2::zero(),
+            interactive_force_mode: true,
             // BOUNDARY PROPERTIES
             box_bound_x: 800.0,
             box_bound_y: 600.0,
@@ -318,7 +320,7 @@ impl Fluid {
             interaction_force += (direction * strength - self.particles.velocities[i]) * center_t;
         }
 
-        interaction_force
+        interaction_force * if self.interactive_force_mode { 1.0 } else { -0.15 }
     }
 
     pub fn resolve_collision(&mut self, i: usize) {
@@ -352,7 +354,7 @@ impl Fluid {
             // Apply gravity and predicted positions
             (0..self.particles.len()).for_each(|i| {
                 self.particles.velocities[i] += Vector2::down() * self.gravity * dt;
-                let interaction_force = self.calculate_interaction_force(self.interactive_force_position, 50.0, 150.0, i);
+                let interaction_force = self.calculate_interaction_force(self.interactive_force_position, 100.0, 150.0, i);
                 self.particles.velocities[i] += interaction_force;
                 self.particles.predicted_positions[i] = self.particles.positions[i] + self.particles.velocities[i] * dt;
             });

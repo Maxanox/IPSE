@@ -57,6 +57,7 @@ impl SimulationTemplate for Fluid {
                         self.visual_filter = settings.visual_filter;
                         self.particles.smoothing_radius = settings.smoothing_radius;
                         self.viscosity_strength = settings.viscosity_strength;
+                        self.interactive_force_mode = settings.interactive_force_mode;
                     },
                     None => return Err("No data provided for the 'set_settings' event".to_string())
                 }

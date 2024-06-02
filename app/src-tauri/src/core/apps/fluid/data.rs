@@ -27,4 +27,5 @@ pub struct EventSettings {
     pub visual_filter: u8,
     pub smoothing_radius: f32,
     pub viscosity_strength: f32,
+    pub interactive_force_mode: bool
 }
