@@ -16,24 +16,65 @@ pub struct FluidParticles {
 }
 */
 
-export interface FluidStarterData {
-    positions: Vector2[],
+
+
+
+export interface AABB {
+    min: Vector2;
+    max: Vector2;
 }
 
-export interface FluidParticles {
-    mass: number,
-    radius: number,
-    target_density: number,
-    pressure_multiplier: number,
-    smoothing_radius: number,
-    positions: Vector2[],
-    velocities: Vector2[],
-    densities: number[],
-    colors: string[],
+
+export enum ShapeType {
+    Circle = 0,
+    Box = 1
 }
+
+export interface RigidBody {
+    position: Vector2;
+    linearVelocity: Vector2;
+    angle: number;
+    angularVelocity: number;
+    force: Vector2;
+    mass: number;
+    invMass: number;
+    density: number;
+    area: number;
+    restitution: number;
+    isStatic: boolean;
+    radius: number;
+    width: number;
+    height: number;
+    shape: ShapeType;
+    triangles: number[];
+    vertices: Vector2[];
+    transformedVertices: Vector2[];
+    aabb: AABB;
+    tfvRequired: boolean;
+    aabbUpdate: boolean;
+    index: number;
+    inertia: number;
+    invInertia: number;
+}
+
+
+
+export interface WorkSpace {
+    mnBs: number;
+    mxBs: number;
+    mnD: number;
+    mxD: number;
+    minIter: number;
+    maxIter: number;
+    bodyList: RigidBody[];
+    gravity: Vector2;
+    bodyCount: number;
+    contactPair: [number, number][];
+}
+
 
 export interface RendererData {
-    fluid_particles: FluidParticles,
+    bodies: WorkSpace,
 }
 
 /*
@@ -47,6 +88,7 @@ pub struct EventSettings {
     pub smoothing_radius: f32
 }
 */
+
 
 export interface EventSettings {
     collision_restitution: number,
