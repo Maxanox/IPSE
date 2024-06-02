@@ -325,7 +325,7 @@
                 drag = true
                 interactive_force_position_update();
             }}
-            on:pointerup={(event) => drag = false}
+            on:pointerup={() => drag = false}
             on:pointerleave={() => drag = false}
             on:pointermove={(event) => {
                 if (drag) {

@@ -49,8 +49,26 @@ impl SimulationTemplate for RigidSimulation {
     }
 
     fn get_data_to_render(&self) -> Result<Box<dyn DataToSend>, String> {
+        let mut light_bodies: Vec<LightRigidBody> = Vec::new();
+
+        for body in &self.work_space.body_list {
+            let light_body = LightRigidBody {
+                position: Vector2 {
+                    x: body.position.x as f32,
+                    y: body.position.y as f32
+                },
+                rotation: body.angle as f32,
+                radius: body.radius as f32,
+                width: body.width as f32,
+                height: body.height as f32,
+                shape: if let ShapeType::Box = body.shape { true } else { false }
+            };
+
+            light_bodies.push(light_body);
+        }
+
         let data_to_render = RendererData {
-            bodies: self.work_space.body_list.clone()
+            bodies: light_bodies
         };
 
         Ok(Box::new(data_to_render))

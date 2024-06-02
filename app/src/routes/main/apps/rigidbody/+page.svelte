@@ -12,25 +12,15 @@
     import { Container } from 'svelte-pixi';
     
     import type { RendererData } from './lib/interfaces';
-    import HBarQuickData from '$lib/components/app/UI/boxes/HBarQuickData.svelte';
-
-
-    let duration_callback: NodeJS.Timeout;
 
     let renderer_width: number = 1000;
-    let renderer_height: number = 600;
-
-    let step = 0;
-    let fps = 120;
-    let duration = 0;
-
-    let speed_coef = 1;
-    let err = "";
-    
+    let renderer_height: number = 600;   
 
     let launched = false;
 
     let unlistnen_render: UnlistenFn;
+
+    let container: PIXI.Container;
 
     async function startSimulation() {
         launched = true;
@@ -46,6 +36,29 @@
         await invoke('select_simulation_template', { width: renderer_width, height: renderer_height, id: 2 });
         unlistnen_render = await listen('render', async (event) => {
             let payload = event.payload as RendererData;
+
+            for (let i = 0; i < payload.bodies.length; i++) {
+                let body = payload.bodies[i];
+                
+                let graphics = new PIXI.Graphics()
+
+                // Si c'est une Box
+                if (body.shape) {
+                    graphics
+                        .beginFill(parseInt("0xFFFFFFFF"))
+                        .drawRect(body.position.x, body.position.y, body.width, body.height)
+                        .endFill();
+                } else { // Sinon c'est un cercle
+                    graphics
+                        .beginFill(parseInt("0xFFFFFFFF"))
+                        .drawCircle(body.position.x, body.position.y, body.radius)
+                        .endFill();
+                }
+                
+                container.addChild(graphics);
+
+                graphics.rotation = body.rotation;
+            }
         });
     });
 
@@ -56,21 +69,10 @@
 </script>
 
 <App slotPageHeader="flex" regionPage="p-5 gap-5">
-    <svelte:fragment slot="pageHeader">
-        <HBarQuickData
-            data={[
-                { name: 'Step', value: step }, 
-                { name: 'FPS', value: fps.toFixed(2) }, 
-                { name: 'Duration', value: duration.toFixed(2) },
-            
-            ]} 
-            light_switch={true}>
-        </HBarQuickData>
-    </svelte:fragment>
     <!-- default slot -->
     <div class="flex flex-col items-center justify-center gap-5 m-auto">
-        <Renderer bind:width={renderer_width} bind:height={renderer_height} controls={launched}>
-            <!-- Container -->
+        <Renderer bind:width={renderer_width} bind:height={renderer_height} controls={false}>
+            <Container bind:instance={container} />
         </Renderer>
         
         {#if !launched}
