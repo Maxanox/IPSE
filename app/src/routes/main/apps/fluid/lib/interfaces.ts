@@ -55,5 +55,6 @@ export interface EventSettings {
     mass: number,
     pressure_stiffness: number,
     visual_filter: number,
-    smoothing_radius: number
+    smoothing_radius: number,
+    viscosity_strength: number,
 }

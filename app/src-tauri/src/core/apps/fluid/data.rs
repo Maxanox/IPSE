@@ -25,5 +25,6 @@ pub struct EventSettings {
     pub mass: f32,
     pub pressure_stiffness: f32,
     pub visual_filter: u8,
-    pub smoothing_radius: f32
+    pub smoothing_radius: f32,
+    pub viscosity_strength: f32,
 }

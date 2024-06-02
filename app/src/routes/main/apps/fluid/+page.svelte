@@ -2,7 +2,6 @@
     import { listen, type UnlistenFn } from '@tauri-apps/api/event';
     import { invoke } from '@tauri-apps/api/tauri';
     import { onDestroy, onMount } from 'svelte';
-    import { RadioGroup, RadioItem } from '@skeletonlabs/skeleton';
     
     import type { Vector2 } from '$lib/components/app/Interfaces/vector2.ts';
     import App from '$lib/components/app/App/App.svelte';
@@ -10,91 +9,65 @@
 
     import * as PIXI from 'pixi.js';
 
-    import { ParticleContainer } from 'svelte-pixi';
+    import { Container, Graphics } from 'svelte-pixi';
     import HBarQuickData from '$lib/components/app/UI/boxes/HBarQuickData.svelte';
     
     import type { FluidStarterData, RendererData, EventSettings } from './lib/interfaces';
     import ParticleSrc from "./static/particle.png";
+    import { fade } from 'svelte/transition';
 
     let duration_callback: NodeJS.Timeout;
 
-    let renderer_width: number = 1000;
-    let renderer_height: number = 600;
-    let particle_container: PIXI.ParticleContainer;
+    let renderer_div_owner: HTMLDivElement;
+    let renderer_width: number;
+    let renderer_height: number;
+    let particle_container: PIXI.Container;
 
     let step = 0;
     let fps = 120;
     let duration = 0;
 
     let launched = false;
+    let running = true;
 
-    let particle_number = 1;
-    let speed_coef = 1;
+    let particle_number = 820;
     let err = "";
+
+    let drag = false;
+    let mouse_position: Vector2 = { x: 0, y: 0 };
 
     let event_settings: EventSettings = { 
         collision_restitution: 0.95,
-        gravity: 0,
-        target_density: 0.75,
-        mass: 50,
-        pressure_stiffness: 3.5,
+        gravity: 60,
+        target_density: 2,
+        mass: 1,
+        pressure_stiffness: 100,
         visual_filter: 0,
         smoothing_radius: 30,
+        viscosity_strength: 1
     };
 
     $ : {
-        invoke('send_event_to_simulation', { event: "set_settings", data: JSON.stringify(event_settings) }).catch((error) => {if (launched) {err = error}});
+        invoke('send_event_to_simulation', { event: "set_settings", data: JSON.stringify(event_settings) }).catch((error) => err = error);
+    }
+
+    $ : {
+        invoke('send_event_to_simulation', { event: "interractive_force_toggle", data: JSON.stringify(drag) }).catch((error) => err = error);
+    }
+
+    $ : {
+        if (renderer_div_owner) {
+            renderer_width = renderer_div_owner.clientWidth;
+            renderer_height = renderer_div_owner.clientHeight;
+        }
     }
 
     function getRandomInt(max: number) {
         return Math.floor(Math.random() * max);
     }
 
-    async function spawnParticles() {
-        launched = true;
-
-        let starter_data: FluidStarterData = { positions: [] };
-
-        const squareSize = renderer_height / 3;
-        const squareX = (renderer_width - squareSize) / 2;
-        const squareY = (renderer_height - squareSize) / 2;
-
-        let particleIndex = 0;
-        for (let y = squareY; y < squareY + squareSize; y += squareSize / Math.sqrt(particle_number)) {
-            for (let x = squareX; x < squareX + squareSize; x += squareSize / Math.sqrt(particle_number)) {
-            let particle = new PIXI.Sprite(PIXI.Texture.from(ParticleSrc));
-            particle.anchor.set(0.5, 0.5);
-            particle.x = x;
-            particle.y = y;
-            starter_data.positions.push({ x: particle.x, y: particle.y });
-            particle_container.addChild(particle);
-            particleIndex++;
-            if (particleIndex >= particle_number) {
-                break;
-            }
-            }
-            if (particleIndex >= particle_number) {
-            break;
-            }
-        }
-
-        let renderer_size: Vector2 = { x: renderer_width, y: renderer_height };
-
-        await invoke('initialize_simulation', { rendererSize: renderer_size, serializedData: JSON.stringify(starter_data)}).catch((error) => err = error);
-
-        await invoke('send_event_to_simulation', { event: 'set_settings', data: JSON.stringify(event_settings) }).catch((error) => err = error);
-
-        await invoke('run_simulation').catch((error) => err = error);
-
-        duration_callback = setInterval(() => {
-            duration += 0.01;
-        }, 10);
-    }
-
-    let unlistnen_drawParticles: UnlistenFn;
-
-    onMount(async () => {
-        await invoke('select_simulation_template', { width: renderer_width, height: renderer_height, id: 1 }).catch((error) => err = error);
+    async function selectSimulation() {
+        await invoke('select_simulation_template', { width: 0, height: 0, id: 1 }).catch((error) => err = error);
 
         unlistnen_drawParticles = await listen('render', async (event) => {
             let payload = event.payload as RendererData;
@@ -112,23 +85,124 @@
             }
 
             particle_container.children.forEach((particle, index) => {
-                particle.x = fluid_particles.positions[index].x;
-                particle.y = fluid_particles.positions[index].y;
-                particle.tint = parseInt(fluid_particles.colors[index].replace("#", "0x"));
-                particle.scale.set(fluid_particles.radius/64);
+                let sprite = particle as PIXI.Sprite;
+                sprite.x = fluid_particles.positions[index].x;
+                sprite.y = fluid_particles.positions[index].y;
+                sprite.tint = parseInt(fluid_particles.colors[index].replace("#", "0x"));
+                sprite.scale.set(fluid_particles.radius/64);
             });
 
             step++;
         });
-    });
+    }
 
-    onDestroy(async () => {
+    async function initSimulation() {
+        step = 0;
+        fps = 120;
+        duration = 0;
+
+        launched = false;
+        running = true;
+
+        err = "";
+
+        drag = false;
+        mouse_position = { x: 0, y: 0 };
+
+        let starter_data: FluidStarterData = { positions: [] };
+
+        const squareSize = renderer_height / 1.5;
+        const squareX = (renderer_width - squareSize) / 2;
+        const squareY = (renderer_height - squareSize) / 2;
+
+        let particleIndex = 0;
+        for (let y = squareY; y < squareY + squareSize; y += squareSize / Math.sqrt(particle_number)) {
+            for (let x = squareX; x < squareX + squareSize; x += squareSize / Math.sqrt(particle_number)) {
+                let particle = new PIXI.Sprite(PIXI.Texture.from(ParticleSrc));
+                particle.anchor.set(0.5, 0.5);
+                particle.x = x;
+                particle.y = y;
+                starter_data.positions.push({ x: particle.x, y: particle.y });
+                particle_container.addChild(particle);
+                particleIndex++;
+                if (particleIndex >= particle_number) {
+                    break;
+                }
+            }
+        }
+
+        let renderer_size: Vector2 = { x: renderer_width, y: renderer_height };
+
+        await invoke('initialize_simulation', { rendererSize: renderer_size, serializedData: JSON.stringify(starter_data)}).catch((error) => err = error);
+
+        await update_settings();
+    }
+
+    async function runSimulation() {
+        if (launched) {
+            await invoke('run_simulation').catch((error) => err = error);
+        } else {
+            await selectSimulation();
+            await initSimulation();
+            await invoke('run_simulation').catch((error) => err = error);
+            launched = true;
+        }
+
+        particle_container.visible = true;
+        running = true;
+
+        duration_callback = setInterval(() => {
+            duration += 0.01;
+        }, 10);
+    }
+
+    async function stopSimulation() {
+        running = false;
+
         clearInterval(duration_callback);
+
+        await invoke('stop_simulation').catch((error) => err = error);
+    }
+
+    async function quitSimulation() {
+        particle_container.visible = false;
+        running = false;
+        launched = false;
+
+        clearInterval(duration_callback);
+
+        err = "";
+        duration = 0;
+        step = 0;
+        particle_container.removeChildren();
 
         unlistnen_drawParticles();
 
         await invoke('quit_simulation').catch((error) => err = error);
+    }
+
+    async function resetSimulation() {
+        await quitSimulation();
+        await runSimulation();
+    }
+
+    async function update_settings() {
+        await invoke('send_event_to_simulation', { event: 'set_settings', data: JSON.stringify(event_settings) }).catch((error) => err = error);
+    }
+
+    let unlistnen_drawParticles: UnlistenFn;
+
+    onMount(async () => {
+        selectSimulation();
     });
+
+    onDestroy(async () => {
+        quitSimulation();
+    });
+
+    async function interactive_force_position_update() {
+        await invoke('send_event_to_simulation', { event: 'interactive_force_position', data: JSON.stringify({ x: mouse_position.x, y: mouse_position.y }) }).catch((error) => err = error);
+    }
 </script>
 
 <App slotPageHeader="flex" regionPage="p-5 gap-5">
@@ -145,7 +219,7 @@
     </svelte:fragment>
 
     <!-- default slot -->
-    <div class="flex flex-row">
+    <div class="flex flex-row h-full gap-5">
         <div class="card p-4 flex flex-col gap-5">
             <label>
                 <input type="number" class="badge variant-filled mr-1" 
@@ -165,6 +239,14 @@
 
             <label>
                 <input type="number" class="badge variant-filled mr-1" 
+                    bind:value={event_settings.viscosity_strength} min={0} max={1} step={0.5}
+                />
+                <span>Viscosity Strenght</span>
+                <input type="range" bind:value={event_settings.viscosity_strength} min={0} max={1} step={0.01}/>
+            </label>
+
+            <label>
+                <input type="number" class="badge variant-filled mr-1" 
                     bind:value={event_settings.pressure_stiffness} min={0} max={100} step={0.5}
                 />
                 <span>Pressure Multiplier</span>
@@ -173,10 +255,10 @@
 
             <label>
                 <input type="number" class="badge variant-filled mr-1" 
-                    bind:value={event_settings.target_density} min={0} max={100} step={0.5}
+                    bind:value={event_settings.target_density} min={0} max={1000} step={0.5}
                 />
                 <span>Target Density</span>
-                <input type="range" bind:value={event_settings.target_density} min={0} max={100} step={0.1}/>
+                <input type="range" bind:value={event_settings.target_density} min={0} max={1000} step={0.1}/>
             </label>
 
             <label>
@@ -196,29 +278,73 @@
                     <option value={3}>Density</option>
                 </select>
             </label>
+
+            {#if !launched}
+                <div class="flex flex-col justify-center items-center my-auto gap-2">
+                    <label class="flex flex-col w-2/3">
+                        <span>Particle Count: {particle_number}</span>
+                        <input type="range" bind:value={particle_number} min="1" max="3000" />
+                    </label>
+                    <button type="button" class="btn variant-filled" on:click={runSimulation}>Spawn</button>
+                </div>
+            {:else}
+                <span class="text-red-500 m-auto">{err}</span>
+            {/if}
+
+            {#if launched}
+                <div class="flex flex-row gap-2 justify-center w-full">
+                    <button type="button" class="w-full bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg" on:click={resetSimulation}>
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    {#if running}
+                        <button type="button" class="w-full bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg" on:click={stopSimulation}>
+                            <i class="fa-solid fa-pause"></i>
+                        </button>
+                    {:else}
+                        <button type="button" class="w-full bg-green-500 hover:bg-green-600 text-white p-2 rounded-lg" on:click={runSimulation}>
+                            <i class="fa-solid fa-play"></i>
+                        </button>
+                    {/if}
+                    <button type="button" class="w-full bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg" on:click={quitSimulation}>
+                        <i class="fa-solid fa-stop"></i>
+                    </button>                
+                </div>
+            {/if}
         </div>
         
-        <div class="flex flex-col items-center justify-center gap-5 m-auto">
-            <Renderer bind:width={renderer_width} bind:height={renderer_height} controls={launched}>
-                <ParticleContainer
-                    bind:instance={particle_container}
-                    autoResize
-                    properties={{
-                        position: true,
-                        tint: true,
-                        scale: true
-                    }}
-                />
-            </Renderer>
-            
-            {#if !launched}
-                <label>
-                    Particle Count: {particle_number}
-                    <input type="range" bind:value={particle_number} min="1" max="4000" />
-                </label>
-                <button type="button" class="btn variant-filled" on:click={spawnParticles}>Spawn</button>
+        <div bind:this={renderer_div_owner} class="flex items-center justify-center w-full h-full relative"
+            on:pointerdown={(event) => {
+                mouse_position = { x: Math.round(event.offsetX), y: Math.round(event.offsetY) }; 
+                drag = true
+            }}
+            on:pointerup={() => drag = false}
+            on:pointerleave={() => drag = false}
+            on:pointermove={(event) => {
+                if (drag) {
+                    mouse_position = { x: Math.round(event.offsetX), y: Math.round(event.offsetY) };
+                    interactive_force_position_update();
+                }
+            }}
+        >
+            {#if !renderer_width || !renderer_height}
+                <span>Loading...</span>
             {:else}
-                <span class="text-red-500">{err}</span>
+                <Renderer width={renderer_width} height={renderer_height} controls={false}>
+                    <Container bind:instance={particle_container}/>
+                    {#if drag}
+                        <Graphics
+                            x={mouse_position.x}
+                            y={mouse_position.y}
+                            draw={(g) => {
+                                g.lineStyle(1, 0x00AA00);
+                                g.drawCircle(0, 0, 50);
+                            }}
+                        />
+                        <div transition:fade class="absolute z-10 top-2 left-2 text-white bg-black bg-opacity-20 p-2 rounded-lg">
+                            {'(' + mouse_position.x + ',' + mouse_position.y + ')'}
+                        </div>
+                    {/if}
+                </Renderer>
             {/if}
         </div>
     </div>

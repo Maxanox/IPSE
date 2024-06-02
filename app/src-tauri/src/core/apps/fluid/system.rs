@@ -56,8 +56,42 @@ impl SimulationTemplate for Fluid {
                         self.particles.pressure_multiplier = settings.pressure_stiffness;
                         self.visual_filter = settings.visual_filter;
                         self.particles.smoothing_radius = settings.smoothing_radius;
+                        self.viscosity_strength = settings.viscosity_strength;
                     },
                     None => return Err("No data provided for the 'set_settings' event".to_string())
+                }
+
+                if self.visual_filter == 0 {
+                    for color in self.particles.colors.iter_mut() {
+                        *color = "#FFFFFFFF".to_string();
+                    }
+                }
+            },
+            "interractive_force_toggle" => {
+                match data {
+                    Some(data) => {
+                        let interactive_force_toggle: bool = match serde_json::from_str(&data) {
+                            Ok(deserialized_data) => deserialized_data,
+                            Err(e) => return Err(e.to_string())
+                        };
+
+                        self.interactive_force = interactive_force_toggle;
+                    },
+                    None => return Err("No data provided for the 'interractive_force_toggle' event".to_string())
+                }
+            }
+            "interactive_force_position" => {
+                match data {
+                    Some(data) => {
+                        let interactive_force_position: Vector2 = match serde_json::from_str(&data) {
+                            Ok(deserialized_data) => deserialized_data,
+                            Err(e) => return Err(e.to_string())
+                        };
+
+                        self.interactive_force = true;
+                        self.interactive_force_position = interactive_force_position;
+                    },
+                    None => return Err("No data provided for the 'interactive_force' event".to_string())
                 }
             },
             _ => return Err("Unknown event".to_string())
