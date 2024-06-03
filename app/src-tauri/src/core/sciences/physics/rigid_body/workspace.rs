@@ -75,6 +75,7 @@ impl WorkSpace{
     #[allow(dead_code)]
     pub fn step_bodies(&mut self,time:f64,iterations:i32){
         for i in 0..self.body_list.len() {
+            self.body_list[i].force=self.gravity.clone();
             self.body_list[i].step_body(time,iterations);
         }
     }

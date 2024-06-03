@@ -14,22 +14,22 @@ impl SimulationTemplate for RigidSimulation {
       self.renderer_size = c_vect(renderer_size.x as f64, renderer_size.y as f64);
 
 
-      let mut bord_gauche = initializer_r(5.0,50.0,0.0,self.renderer_size.y*2.0,true,
-                                          0.0,2.0,self.renderer_size.y-2.0,ShapeType::Box,0.0);
-      bord_gauche.position=c_vect(0.0,self.renderer_size.y/2.0);
+      let mut bord_gauche = initializer_r(5.0,50.0,0.0,self.renderer_size.y*5.0,false,
+                                          0.0,2.0,self.renderer_size.y-5.0,ShapeType::Box,0.0);
+      bord_gauche.position=c_vect(5.0,self.renderer_size.y/2.0);
 
-      let mut bord_bas = initializer_r(5.0,50.0,0.0,self.renderer_size.y*2.0,true,
-                                     0.0,self.renderer_size.x-2.0,2.0,ShapeType::Box,0.0);
+      let mut bord_bas = initializer_r(5.0,50.0,0.0,self.renderer_size.y*5.0,true,
+                                     0.0,self.renderer_size.x-2.0,5.0,ShapeType::Box,0.0);
 
-      bord_bas.position=c_vect(self.renderer_size.x/2.0,0.0);
+      bord_bas.position=c_vect(self.renderer_size.x/2.0,5.0);
 
-      let mut bord_haut =  initializer_r(5.0,50.0,0.0,self.renderer_size.y*2.0,true,
-                                      0.0,self.renderer_size.x-2.0,2.0,ShapeType::Box,0.0);
-      bord_haut.position=c_vect(self.renderer_size.x/2.0,self.renderer_size.y);
+      let mut bord_haut =  initializer_r(5.0,50.0,0.0,self.renderer_size.y*2.0,false,
+                                      0.0,self.renderer_size.x-2.0,5.0,ShapeType::Box,0.0);
+      bord_haut.position=c_vect(self.renderer_size.x-5.0,self.renderer_size.y);
 
       let mut bord_d =initializer_r(5.0,50.0,0.0,self.renderer_size.y*2.0,true,
-                                    0.0,2.0,self.renderer_size.y-2.0,ShapeType::Box,0.0);
-      bord_d.position=c_vect(self.renderer_size.x,self.renderer_size.y/2.0);
+                                    0.0,2.0,self.renderer_size.y-5.0,ShapeType::Box,0.0);
+      bord_d.position=c_vect(self.renderer_size.x-5.0,self.renderer_size.y/2.0);
 
       self.push_body(bord_haut);
       self.push_body(bord_bas);
