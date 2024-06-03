@@ -37,6 +37,8 @@
         unlistnen_render = await listen('render', async (event) => {
             let payload = event.payload as RendererData;
 
+            container.removeChildren();
+
             for (let i = 0; i < payload.bodies.length; i++) {
                 let body = payload.bodies[i];
                 
