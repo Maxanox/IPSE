@@ -1,7 +1,7 @@
 use super::r#struct::Vector2D;
 use super::r#struct::RigidBody;
 
-pub const G : Vector2D = Vector2D{x:0.0,y:-9.81,};
+pub const G : Vector2D = Vector2D{x:0.0, y:9.81,};
 
 impl Vector2D{
     #[allow(dead_code)]

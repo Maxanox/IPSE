@@ -175,7 +175,7 @@ impl Fluid {
         let mut density = self.smoothing_kernel(0.0); // au moins la densité de la particule i
 
 
-        // OPTIMIZATION: only search for neighbors in the smoothing radius
+        // OPTIMIZATION: only search for neighbors in the cells grid
         for other_i in self.in_radius_neighbors_search(i) {
             let distance = self.particles.predicted_positions[i].distance_to(self.particles.predicted_positions[other_i]);
             let influence = self.smoothing_kernel(distance);
@@ -253,7 +253,7 @@ impl Fluid {
     fn calculate_viscosity_force(&self, i: usize) -> Vector2 {
         let mut viscosity_force = Vector2::zero();
 
-        // OPTIMIZATION: only search for neighbors in the smoothing radius
+        // OPTIMIZATION: only search for neighbors in the cells grid
         for other_i in self.in_radius_neighbors_search(i) {
             let distance = self.particles.predicted_positions[i].distance_to(self.particles.predicted_positions[other_i]);
             let influecne = self.viscosity_kernel(distance);
@@ -283,7 +283,7 @@ impl Fluid {
     pub fn calculate_pressure_force(&self, i: usize) -> Vector2 {
         let mut pressure_force = Vector2::zero();
 
-        // OPTIMIZATION: only search for neighbors in the smoothing radius
+        // OPTIMIZATION: only search for neighbors in the cells grid
         for other_i in self.in_radius_neighbors_search(i) {
             let offset = self.particles.predicted_positions[i] - self.particles.predicted_positions[other_i];
             let distance = offset.magnitude();

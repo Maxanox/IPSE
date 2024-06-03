@@ -10,34 +10,41 @@ use super::data::*;
 
 // Obligatory implementation of the `SimulationTemplate` trait for the `RigidSimulation` struct.
 impl SimulationTemplate for RigidSimulation {
-  fn initialize(&mut self, renderer_size: Vector2, serialized_data: Option<String>) -> Result<(), String> {
-      self.renderer_size = c_vect(renderer_size.x as f64, renderer_size.y as f64);
+fn initialize(&mut self, renderer_size: Vector2, serialized_data: Option<String>) -> Result<(), String> {
+    self.renderer_size = c_vect(renderer_size.x as f64, renderer_size.y as f64);
 
+    let mut bord_gauche = initializer_r(5.0, 5.0, 0.0, self.renderer_size.y * 5.0, true, 0.0, 2.0, self.renderer_size.y, ShapeType::Box, 0.0);
+    bord_gauche.position = c_vect(0.0, 0.0);
 
-      let mut bord_gauche = initializer_r(5.0,50.0,0.0,self.renderer_size.y*5.0,false,
-                                          0.0,2.0,self.renderer_size.y-5.0,ShapeType::Box,0.0);
-      bord_gauche.position=c_vect(5.0,self.renderer_size.y/2.0);
+    let mut bord_bas = initializer_r(5.0, 5.0, 0.0, self.renderer_size.y * 5.0, true, 0.0, self.renderer_size.x, 2.0, ShapeType::Box, 0.0);
+    bord_bas.position = c_vect(0.0, self.renderer_size.y - 2.5);
 
-      let mut bord_bas = initializer_r(5.0,50.0,0.0,self.renderer_size.y*5.0,true,
-                                     0.0,self.renderer_size.x-2.0,5.0,ShapeType::Box,0.0);
+    let mut bord_haut = initializer_r(5.0, 5.0, 0.0, self.renderer_size.y * 2.0, true, 0.0, self.renderer_size.x, 2.0, ShapeType::Box, 0.0);
+    bord_haut.position = c_vect(0.0, 0.0);
 
-      bord_bas.position=c_vect(self.renderer_size.x/2.0,5.0);
+    let mut bord_d = initializer_r(5.0, 5.0, 0.0, self.renderer_size.y * 2.0, true, 0.0, 2.0, self.renderer_size.y, ShapeType::Box, 0.0);
+    bord_d.position = c_vect(self.renderer_size.x - 2.5, 0.0);
 
-      let mut bord_haut =  initializer_r(5.0,50.0,0.0,self.renderer_size.y*2.0,false,
-                                      0.0,self.renderer_size.x-2.0,5.0,ShapeType::Box,0.0);
-      bord_haut.position=c_vect(self.renderer_size.x-5.0,self.renderer_size.y);
+    self.push_body(bord_haut);
+    self.push_body(bord_bas);
+    self.push_body(bord_gauche);
+    self.push_body(bord_d);
 
-      let mut bord_d =initializer_r(5.0,50.0,0.0,self.renderer_size.y*2.0,true,
-                                    0.0,2.0,self.renderer_size.y-5.0,ShapeType::Box,0.0);
-      bord_d.position=c_vect(self.renderer_size.x-5.0,self.renderer_size.y/2.0);
+    let radius = (renderer_size.x.min(renderer_size.y) / 2.0) - 10.0;
+    let center = c_vect(renderer_size.x as f64 / 2.0, renderer_size.y as f64 / 2.0);
 
-      self.push_body(bord_haut);
-      self.push_body(bord_bas);
-      self.push_body(bord_gauche);
-      self.push_body(bord_d);
+    for i in 0..10 {
+        let angle = i as f64 * (2.0 * std::f64::consts::PI / 10.0);
+        let x = center.x + radius as f64 * angle.cos();
+        let y = center.y + radius as f64 * angle.sin();
 
-      Ok(())
+        let mut body = initializer_r(5.0, 20.0, 0.2, 0.0, false, 0.0, 50.0, 50.0, ShapeType::Box, 0.0);
+        body.position = c_vect(x, y);
+        self.push_body(body);
     }
+
+    Ok(())
+}
 
     fn next_step(&mut self, dt: f32) -> Result<(), String> {
         self.update(dt as f64);
